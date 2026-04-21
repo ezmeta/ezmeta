@@ -6,11 +6,14 @@ import { motion } from 'framer-motion';
 import {
   Activity,
   ArrowRight,
+  Bot,
   BarChart3,
   Check,
-  LineChart,
+  Globe2,
+  HandCoins,
+  Heart,
   Radar,
-  Sparkles,
+  Trophy,
   X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -94,10 +97,20 @@ export default function Home() {
   ];
 
   const planOffers: Record<'starter' | 'pro' | 'agency', { value: string; bonus: string }> = {
-    starter: { value: '1 Ad Account', bonus: 'Bonus: +1 Akaun' },
-    pro: { value: '3 Ad Accounts', bonus: 'Bonus: +2 Akaun' },
-    agency: { value: '7 Ad Accounts', bonus: 'Bonus: +3 Akaun' },
+    starter: { value: '2 Ad Accounts', bonus: 'Bonus: +1 Akaun' },
+    pro: { value: '5 Ad Accounts', bonus: 'Bonus: +2 Akaun' },
+    agency: { value: '10 Ad Accounts', bonus: 'Bonus: +3 Akaun' },
   };
+  const orderedComparisonFeatures = useMemo(
+    () =>
+      allFeatures.filter((feature) => {
+        const value = feature.trim();
+        if (/^\d+\s*ad\s*accounts?$/i.test(value)) return false;
+        if (/^\d+\s*akaun$/i.test(value)) return false;
+        return true;
+      }),
+    [allFeatures]
+  );
 
   const heroMetrics = lang === 'bm'
     ? [
@@ -113,14 +126,56 @@ export default function Home() {
 
   const testimonials = lang === 'bm'
     ? [
-        { quote: 'Sebelum ni saya check 7 dashboard. Sekarang semua signal penting masuk Telegram dalam satu aliran.', name: 'Aina, Growth Lead' },
-        { quote: 'Kos iklan yang bocor lebih cepat dikesan. Team boleh cut rugi dalam hari yang sama, bukan hujung minggu.', name: 'Hakim, Performance Marketer' },
-        { quote: 'Creative studio dia bagi idea baru yang relevan ikut data, bukan template random.', name: 'Nadia, Founder eCommerce' },
+        {
+          quote:
+            'Sebelum ni saya kena check ads manager setiap jam. Sekarang EZMeta yang buat semua. Laporan masuk Telegram, saya baca sambil sarapan.',
+          name: 'Ahmad Razif',
+          role: 'Dropshipper, Selangor',
+          initials: 'AR',
+          avatarTone: 'bg-emerald-500/25 text-emerald-300',
+        },
+        {
+          quote:
+            'Creative Fatigue detector tu memang game changer. Dulu tak tahu kenapa CTR jatuh. Sekarang EZMeta alert awal, saya sempat tukar creative.',
+          name: 'Siti Norzahira',
+          role: 'E-commerce, KL',
+          initials: 'SN',
+          avatarTone: 'bg-sky-500/25 text-sky-300',
+        },
+        {
+          quote:
+            'Manage 8 client ads sekarang. Dulu kena manual check satu-satu. EZMeta bagi summary semua clients dalam satu laporan. Jimat masa 3 jam sehari.',
+          name: 'Faizul Hakim',
+          role: 'Digital Agency, Johor',
+          initials: 'FH',
+          avatarTone: 'bg-rose-500/25 text-rose-300',
+        },
       ]
     : [
-        { quote: 'We used to check seven dashboards. Now critical performance signals reach Telegram in one stream.', name: 'Aina, Growth Lead' },
-        { quote: 'Ad spend leaks are detected much faster. We can cut losses the same day, not at week end.', name: 'Hakim, Performance Marketer' },
-        { quote: 'The creative studio suggests angles based on live data, not generic templates.', name: 'Nadia, eCommerce Founder' },
+        {
+          quote:
+            'I used to check Ads Manager every hour. Now EZMeta handles it and sends reports to Telegram while I have breakfast.',
+          name: 'Ahmad Razif',
+          role: 'Dropshipper, Selangor',
+          initials: 'AR',
+          avatarTone: 'bg-emerald-500/25 text-emerald-300',
+        },
+        {
+          quote:
+            'The Creative Fatigue detector is a game changer. I now catch CTR drops earlier and refresh creatives in time.',
+          name: 'Siti Norzahira',
+          role: 'E-commerce, KL',
+          initials: 'SN',
+          avatarTone: 'bg-sky-500/25 text-sky-300',
+        },
+        {
+          quote:
+            'Managing 8 client ad accounts is much easier now. EZMeta consolidates all summaries into one report and saves hours daily.',
+          name: 'Faizul Hakim',
+          role: 'Digital Agency, Johor',
+          initials: 'FH',
+          avatarTone: 'bg-rose-500/25 text-rose-300',
+        },
       ];
 
   const pricingPreview = plans.slice(0, 3);
@@ -243,18 +298,57 @@ export default function Home() {
 
       <section id="features" className="relative border-t border-[#121212] bg-slate-950/35 px-4 py-24 md:py-32">
         <div className="mx-auto max-w-6xl">
-          <h2 className="font-display mb-8 text-center text-4xl text-slate-100 md:text-5xl">{t.featuresTitle}</h2>
+          <h2 className="font-display mb-3 text-center text-4xl text-slate-100 md:text-5xl">AI yang faham Meta Ads lebih baik dari manusia.</h2>
+          <p className="mb-10 text-center text-base text-slate-300 md:text-lg">Features AI yang direka khas untuk advertiser Malaysia.</p>
           <div className="grid gap-6 md:grid-cols-3">
             {[
-              { Icon: BarChart3, badge: 'Realtime Ops', title: t.featureCards[0].title, desc: t.featureCards[0].desc },
-              { Icon: Sparkles, badge: 'Creative Intelligence', title: t.featureCards[1].title, desc: t.featureCards[1].desc },
-              { Icon: LineChart, badge: 'Predictive Action', title: t.featureCards[2].title, desc: t.featureCards[2].desc },
+              {
+                Icon: Trophy,
+                title: 'Winning Ad Detector',
+                desc: 'AI scan semua campaigns dan detect ads yang perform terbaik. Score 0–100. Alert terus bila ada winning ad.',
+                glow: 'from-amber-300/25 to-amber-500/5',
+                iconColor: 'text-amber-300',
+              },
+              {
+                Icon: Globe2,
+                title: 'Creative Fatigue Detector',
+                desc: 'Detect CTR drop, frequency tinggi, dan CPM naik — tanda creative dah mati. Alert awal sebelum performance jatuh teruk.',
+                glow: 'from-violet-300/25 to-violet-500/5',
+                iconColor: 'text-violet-300',
+              },
+              {
+                Icon: HandCoins,
+                title: 'Budget Tracker',
+                desc: 'Monitor budget bulanan semua campaigns. Alert bila dah guna 80% serta pacing cadangan untuk baki hari.',
+                glow: 'from-emerald-300/25 to-emerald-500/5',
+                iconColor: 'text-emerald-300',
+              },
+              {
+                Icon: Heart,
+                title: 'Campaign Health Score',
+                desc: 'Setiap campaign dapat gred A–D berdasarkan ROAS, CTR, CPC, frequency dan conversions.',
+                glow: 'from-rose-300/25 to-rose-500/5',
+                iconColor: 'text-rose-300',
+              },
+              {
+                Icon: BarChart3,
+                title: 'Laporan AI dalam BM',
+                desc: 'Laporan harian dalam Bahasa Malaysia, mudah faham dan actionable terus ke Telegram.',
+                glow: 'from-sky-300/25 to-sky-500/5',
+                iconColor: 'text-sky-300',
+              },
+              {
+                Icon: Bot,
+                title: 'AI Recommendations',
+                desc: 'AI bagi cadangan automasi yang jelas untuk setiap campaign.',
+                glow: 'from-fuchsia-300/25 to-fuchsia-500/5',
+                iconColor: 'text-fuchsia-300',
+              },
             ].map((item) => (
               <motion.div key={item.title} whileHover={{ y: -6 }} className="cyber-panel p-6 transition hover:border-emerald-300/50">
-                <div className="mb-4 inline-flex rounded-xl bg-emerald-500/15 p-3">
-                  <item.Icon className="h-5 w-5 text-emerald-300" />
+                <div className={`mb-4 inline-flex rounded-xl border border-white/10 bg-gradient-to-br ${item.glow} p-3`}>
+                  <item.Icon className={`h-5 w-5 ${item.iconColor}`} />
                 </div>
-                <p className="mb-2 text-[11px] tracking-[0.15em] text-emerald-200 uppercase">{item.badge}</p>
                 <h3 className="text-lg font-semibold text-white">{item.title}</h3>
                 <p className="mt-2 text-sm text-slate-300">{item.desc}</p>
               </motion.div>
@@ -274,7 +368,15 @@ export default function Home() {
               <Activity className="h-4 w-4 text-emerald-300" />
               <div className="mt-3 text-yellow-300">★★★★★</div>
               <p className="mt-3 text-lg leading-8 text-slate-200">“{item.quote}”</p>
-              <p className="mt-5 text-base font-semibold tracking-[0.02em] text-slate-100">{item.name}</p>
+              <div className="mt-5 flex items-center gap-3">
+                <div className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold ${item.avatarTone}`}>
+                  {item.initials}
+                </div>
+                <div>
+                  <p className="text-base font-semibold tracking-[0.02em] text-slate-100">{item.name}</p>
+                  <p className="text-sm text-slate-400">{item.role}</p>
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -303,8 +405,8 @@ export default function Home() {
                   RM{plan.price}
                   <span className="ml-1 text-sm font-normal text-slate-400">/mo</span>
                 </p>
-                <ul className="mt-5 min-h-[300px] space-y-2 text-sm">
-                  {allFeatures.map((feature) => {
+                <ul className="mt-5 min-h-[320px] space-y-2 text-sm">
+                  {orderedComparisonFeatures.map((feature) => {
                     const included = plan.benefits.includes(feature);
                     return (
                       <li key={`${plan.key}-${feature}`} className={`flex items-center gap-2 ${included ? 'text-slate-100' : 'text-slate-400 opacity-20'}`}>

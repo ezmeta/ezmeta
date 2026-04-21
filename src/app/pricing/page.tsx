@@ -57,6 +57,22 @@ export default function PricingPage() {
 
   const { plans, allFeatures } = useMemo(() => buildPricingModel(settings, lang), [settings, lang]);
   const uniqueFeatures = useMemo(() => Array.from(new Set(allFeatures)), [allFeatures]);
+  const orderedComparisonFeatures = useMemo(
+    () =>
+      uniqueFeatures.filter((feature) => {
+        const value = feature.trim();
+        if (/^\d+\s*ad\s*accounts?$/i.test(value)) return false;
+        if (/^\d+\s*akaun$/i.test(value)) return false;
+        return true;
+      }),
+    [uniqueFeatures]
+  );
+
+  const planOffers: Record<'starter' | 'pro' | 'agency', { value: string; bonus: string }> = {
+    starter: { value: '2 Ad Accounts', bonus: 'Bonus: +1 Akaun' },
+    pro: { value: '5 Ad Accounts', bonus: 'Bonus: +2 Akaun' },
+    agency: { value: '10 Ad Accounts', bonus: 'Bonus: +3 Akaun' },
+  };
 
   const pageSubtitle =
     lang === 'bm'
@@ -189,13 +205,15 @@ export default function PricingPage() {
               {plan.popular ? <div className="mb-3 inline-block rounded-full bg-emerald-400 px-3 py-1 text-xs font-semibold text-slate-950">{t.mostPopular}</div> : null}
               <h3 className="text-xl font-semibold text-white">{plan.name}</h3>
               <p className="mt-1 text-sm text-slate-400">{plan.key === 'starter' ? t.starterSubtitle : plan.key === 'pro' ? t.proSubtitle : t.agencySubtitle}</p>
+              <p className="mt-3 text-sm font-medium text-slate-100">{planOffers[plan.key].value}</p>
+              <p className="text-sm text-[#00FF94]">{planOffers[plan.key].bonus}</p>
               <div className="mt-4">
                 <span className="text-4xl font-extrabold text-emerald-100">RM{plan.price}</span>
                 <span className="ml-1 text-sm text-slate-400">/month</span>
               </div>
 
               <ul className="mt-6 min-h-[260px] space-y-2">
-                {uniqueFeatures.map((feature) => {
+                {orderedComparisonFeatures.map((feature) => {
                   const included = plan.benefits.includes(feature);
                   return (
                     <li key={`${plan.key}-${feature}`} className={`flex items-start gap-2 text-sm ${included ? 'text-slate-100' : 'text-slate-500/40'}`}>
