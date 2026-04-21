@@ -47,14 +47,14 @@ export async function getUserProfile(userId: string): Promise<Profile | null> {
     .from('profiles')
     .select('*')
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
   
   if (error) {
     console.error('Error fetching user profile:', error);
     return null;
   }
   
-  return data as Profile;
+  return data ? (data as Profile) : null;
 }
 
 /**
@@ -186,7 +186,7 @@ export async function updateAiGenerationHelpfulness(
   generationId: string,
   wasHelpful: boolean
 ): Promise<boolean> {
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('ai_generations')
     .update({
       feedback: wasHelpful ? 'helpful' : 'not_helpful'

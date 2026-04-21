@@ -8,41 +8,32 @@ import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { landingDictionary } from '@/lib/i18n/landing';
 import { useLanguage } from '@/components/providers/language-provider';
+import { buildPricingModel, EMPTY_PRICING_SETTINGS, type PricingSettings } from '@/lib/pricing-model';
 
-type LandingSettings = {
+type LandingSettings = PricingSettings & {
   hero_headline_bm: string;
   hero_headline_en: string;
   hero_subheadline_bm: string;
   hero_subheadline_en: string;
-  pricing_starter_price: number;
-  pricing_pro_price: number;
-  pricing_agency_price: number;
-  pricing_starter_benefits_bm: string[];
-  pricing_starter_benefits_en: string[];
-  pricing_pro_benefits_bm: string[];
-  pricing_pro_benefits_en: string[];
-  pricing_agency_benefits_bm: string[];
-  pricing_agency_benefits_en: string[];
-  contact_whatsapp: string;
   alert_banner_text_bm: string;
   alert_banner_text_en: string;
 };
 
+type FaqItem = {
+  id: string;
+  question_bm: string;
+  answer_bm: string;
+  question_en: string;
+  answer_en: string;
+  sort_order: number;
+};
+
 const FALLBACK_SETTINGS: LandingSettings = {
+  ...EMPTY_PRICING_SETTINGS,
   hero_headline_bm: 'Hentikan Pembaziran Bajet Iklan. Biar AI Optimumkan Meta Ads Anda.',
   hero_headline_en: 'Stop Wasting Ad Spend. Let AI Optimize Your Meta Ads.',
   hero_subheadline_bm: 'EZ Meta menganalisis prestasi iklan dan menjana creative untuk tingkatkan ROI anda.',
   hero_subheadline_en: 'EZ Meta analyzes ad performance and generates creatives that improve ROI.',
-  pricing_starter_price: 49,
-  pricing_pro_price: 99,
-  pricing_agency_price: 199,
-  pricing_starter_benefits_bm: ['1 Ad Account', 'Dashboard Live (Real-time metrics)', 'Telegram Alerts (Notifikasi harian)', 'Laporan BM Harian', 'AI Recommendations (Asas)'],
-  pricing_starter_benefits_en: ['1 Ad Account', 'Live Dashboard (Real-time metrics)', 'Telegram Alerts (Daily notifications)', 'Daily BM Report', 'AI Recommendations (Basic)'],
-  pricing_pro_benefits_bm: ['3 Ad Accounts', 'Dashboard Live (Real-time metrics)', 'Telegram Alerts (Notifikasi harian)', 'Laporan BM Harian', 'AI Recommendations (Asas)', 'Winning Ad Detector', 'Creative Fatigue Detector', 'Budget Tracker & Optimization', 'Campaign Health Score (Gred A–D)', 'Weekly Report (Automatik setiap Ahad)'],
-  pricing_pro_benefits_en: ['3 Ad Accounts', 'Live Dashboard (Real-time metrics)', 'Telegram Alerts (Daily notifications)', 'Daily BM Report', 'AI Recommendations (Basic)', 'Winning Ad Detector', 'Creative Fatigue Detector', 'Budget Tracker & Optimization', 'Campaign Health Score (A–D)', 'Weekly Report (Automated every Sunday)'],
-  pricing_agency_benefits_bm: ['Unlimited Ad Accounts', 'Dashboard Live (Real-time metrics)', 'Telegram Alerts (Notifikasi harian)', 'Laporan BM Harian', 'AI Recommendations (Asas)', 'Winning Ad Detector', 'Creative Fatigue Detector', 'Budget Tracker & Optimization', 'Campaign Health Score (Gred A–D)', 'Weekly Report (Automatik setiap Ahad)', 'Multi-client Dashboard', 'AI Copywriter BM', '1-Click Optimization', 'Priority Support', 'Custom Branding'],
-  pricing_agency_benefits_en: ['Unlimited Ad Accounts', 'Live Dashboard (Real-time metrics)', 'Telegram Alerts (Daily notifications)', 'Daily BM Report', 'AI Recommendations (Basic)', 'Winning Ad Detector', 'Creative Fatigue Detector', 'Budget Tracker & Optimization', 'Campaign Health Score (A–D)', 'Weekly Report (Automated every Sunday)', 'Multi-client Dashboard', 'AI Copywriter BM', '1-Click Optimization', 'Priority Support', 'Custom Branding'],
-  contact_whatsapp: '+60123456789',
   alert_banner_text_bm: '🚀 Baharu: AI Creative Studio kini menyokong penjanaan skrip video.',
   alert_banner_text_en: '🚀 New: AI Creative Studio now supports video script generation.',
 };
@@ -50,15 +41,21 @@ const FALLBACK_SETTINGS: LandingSettings = {
 export default function Home() {
   const { lang } = useLanguage();
   const [settings, setSettings] = useState<LandingSettings>(FALLBACK_SETTINGS);
+  const [faqs, setFaqs] = useState<FaqItem[]>([]);
 
   useEffect(() => {
     let active = true;
     async function loadSettings() {
       try {
         const res = await fetch('/api/site-settings', { cache: 'no-store' });
+        const faqRes = await fetch('/api/faqs', { cache: 'no-store' });
         if (!res.ok) return;
         const data = (await res.json()) as Partial<LandingSettings>;
         if (active) setSettings({ ...FALLBACK_SETTINGS, ...data });
+        if (faqRes.ok && active) {
+          const faqData = (await faqRes.json()) as FaqItem[];
+          setFaqs(faqData);
+        }
       } catch {
         // fallback already applied
       }
@@ -73,20 +70,9 @@ export default function Home() {
   const heroHeadline = lang === 'bm' ? settings.hero_headline_bm : settings.hero_headline_en;
   const heroSubheadline = lang === 'bm' ? settings.hero_subheadline_bm : settings.hero_subheadline_en;
   const alertBanner = lang === 'bm' ? settings.alert_banner_text_bm : settings.alert_banner_text_en;
-  const starterBenefits = lang === 'bm' ? settings.pricing_starter_benefits_bm : settings.pricing_starter_benefits_en;
-  const proBenefits = lang === 'bm' ? settings.pricing_pro_benefits_bm : settings.pricing_pro_benefits_en;
-  const agencyBenefits = lang === 'bm' ? settings.pricing_agency_benefits_bm : settings.pricing_agency_benefits_en;
-  const allFeatures = agencyBenefits;
   const whatsappHref = `https://wa.me/${settings.contact_whatsapp.replace(/[^\d]/g, '')}`;
 
-  const plans = useMemo(
-    () => [
-      { name: 'Starter', price: settings.pricing_starter_price, subtitle: t.starterSubtitle, benefits: starterBenefits },
-      { name: 'Pro', price: settings.pricing_pro_price, subtitle: t.proSubtitle, benefits: proBenefits, popular: true },
-      { name: 'Agency', price: settings.pricing_agency_price, subtitle: t.agencySubtitle, benefits: agencyBenefits },
-    ],
-    [settings.pricing_starter_price, settings.pricing_pro_price, settings.pricing_agency_price, t, starterBenefits, proBenefits, agencyBenefits]
-  );
+  const { plans, allFeatures } = useMemo(() => buildPricingModel(settings, lang), [settings, lang]);
 
   return (
     <main className="min-h-[calc(100vh-128px)] bg-transparent text-slate-100">
@@ -126,17 +112,17 @@ export default function Home() {
           <h2 className="mb-10 text-center text-3xl font-bold">{t.pricingTitle}</h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {plans.map((plan) => (
-              <motion.div key={plan.name} whileHover={{ y: -8 }} className={`rounded-2xl border bg-white/5 p-6 backdrop-blur-xl transition ${plan.popular ? 'border-emerald-400 shadow-[0_0_45px_rgba(16,185,129,0.25)]' : 'border-slate-800 hover:border-emerald-500/50'}`}>
+              <motion.div key={plan.key} whileHover={{ y: -8 }} className={`rounded-2xl border bg-white/5 p-6 backdrop-blur-xl transition ${plan.popular ? 'border-emerald-400 shadow-[0_0_45px_rgba(16,185,129,0.25)]' : 'border-slate-800 hover:border-emerald-500/50'}`}>
                 {plan.popular ? <span className="inline-block rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-slate-950">{t.mostPopular}</span> : null}
                 <h3 className="mt-4 text-xl font-bold">{plan.name}</h3>
-                <p className="mt-1 text-slate-300">{plan.subtitle}</p>
+                <p className="mt-1 text-slate-300">{plan.key === 'starter' ? t.starterSubtitle : plan.key === 'pro' ? t.proSubtitle : t.agencySubtitle}</p>
                 <p className="mt-4 text-3xl font-extrabold text-emerald-300">RM{plan.price}<span className="text-base font-normal text-slate-400">/mo</span></p>
 
                 <ul className="mt-5 space-y-2 text-sm">
                   {allFeatures.map((feature) => {
                     const included = plan.benefits.includes(feature);
                     return (
-                      <li key={`${plan.name}-${feature}`} className={`flex items-start gap-2 ${included ? 'text-slate-200' : 'text-slate-500'}`}>
+                        <li key={`${plan.key}-${feature}`} className={`flex items-start gap-2 ${included ? 'text-slate-200' : 'text-slate-500'}`}>
                         <span className={`mt-0.5 rounded-full p-1 ${included ? 'bg-emerald-500/20' : 'bg-slate-700/40'}`}>
                           {included ? <Check className="h-3 w-3 text-emerald-400" /> : <X className="h-3 w-3 text-slate-500" />}
                         </span>
@@ -147,9 +133,9 @@ export default function Home() {
                 </ul>
 
                 <div className="mt-6">
-                  {plan.name === 'Agency' ? (
+                  {plan.key === 'agency' ? (
                     <a href={whatsappHref} target="_blank" rel="noreferrer"><Button variant="outline" className="w-full border-emerald-500 text-emerald-300 hover:bg-emerald-500/10">{t.agencyCta}</Button></a>
-                  ) : plan.name === 'Pro' ? (
+                  ) : plan.key === 'pro' ? (
                     <Link href="/pricing"><Button className="w-full bg-emerald-500 text-slate-950 hover:bg-emerald-400">{t.proCta}</Button></Link>
                   ) : (
                     <Link href="/signup"><Button className="w-full bg-emerald-500 text-slate-950 hover:bg-emerald-400">{t.starterCta}</Button></Link>
@@ -165,14 +151,15 @@ export default function Home() {
         <div className="mx-auto max-w-4xl">
           <h3 className="mb-4 text-2xl font-bold">{t.faqTitle}</h3>
           <Accordion type="single" collapsible className="space-y-3">
-            <AccordionItem value="q1" className="rounded-lg border border-slate-800 bg-slate-900/60 px-4">
-              <AccordionTrigger>{t.faq1q}</AccordionTrigger>
-              <AccordionContent>{t.faq1a}</AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="q2" className="rounded-lg border border-slate-800 bg-slate-900/60 px-4">
-              <AccordionTrigger>{t.faq2q}</AccordionTrigger>
-              <AccordionContent>{t.faq2a}</AccordionContent>
-            </AccordionItem>
+            {(faqs.length > 0 ? faqs : [
+              { id: 'q1', question_bm: t.faq1q, answer_bm: t.faq1a, question_en: t.faq1q, answer_en: t.faq1a, sort_order: 1 },
+              { id: 'q2', question_bm: t.faq2q, answer_bm: t.faq2a, question_en: t.faq2q, answer_en: t.faq2a, sort_order: 2 },
+            ]).map((faq) => (
+              <AccordionItem key={faq.id} value={faq.id} className="rounded-lg border border-slate-800 bg-slate-900/60 px-4">
+                <AccordionTrigger>{lang === 'bm' ? faq.question_bm : faq.question_en}</AccordionTrigger>
+                <AccordionContent>{lang === 'bm' ? faq.answer_bm : faq.answer_en}</AccordionContent>
+              </AccordionItem>
+            ))}
           </Accordion>
         </div>
       </section>

@@ -65,7 +65,7 @@ export async function createStripeCustomer(userId: string, email: string): Promi
     });
 
     // Update the user's profile with the Stripe customer ID
-    await supabase
+    await (supabase as any)
       .from('profiles')
       .update({ stripe_customer_id: customer.id } as any)
       .eq('user_id', userId);
@@ -85,11 +85,12 @@ export async function createStripeCustomer(userId: string, email: string): Promi
  */
 export async function getOrCreateStripeCustomer(userId: string, email: string): Promise<string> {
   // Check if the user already has a Stripe customer ID
-  const { data: profile } = await supabase
+  const { data } = await (supabase as any)
     .from('profiles')
     .select('stripe_customer_id')
     .eq('user_id', userId)
     .single();
+  const profile = data as { stripe_customer_id?: string | null } | null;
 
   if (profile && profile.stripe_customer_id) {
     return profile.stripe_customer_id;
@@ -156,19 +157,21 @@ export async function createBillingPortalSession(
   returnUrl: string
 ): Promise<string> {
   try {
+    const stripeClient = requireStripe();
     // Get the user's Stripe customer ID
-    const { data: profile } = await supabase
+    const { data } = await (supabase as any)
       .from('profiles')
       .select('stripe_customer_id')
       .eq('user_id', userId)
       .single();
+    const profile = data as { stripe_customer_id?: string | null } | null;
 
     if (!profile || !profile.stripe_customer_id) {
       throw new Error('User does not have a Stripe customer ID');
     }
 
     // Create a billing portal session
-    const session = await stripe.billingPortal.sessions.create({
+    const session = await stripeClient.billingPortal.sessions.create({
       customer: profile.stripe_customer_id,
       return_url: returnUrl,
     });
@@ -191,8 +194,9 @@ export async function handleStripeWebhook(
   signature: string
 ): Promise<void> {
   try {
+    const stripeClient = requireStripe();
     // Verify the webhook signature
-    const event = stripe.webhooks.constructEvent(
+    const event = stripeClient.webhooks.constructEvent(
       payload,
       signature,
       stripeConfig.webhookSecret
@@ -237,7 +241,8 @@ async function handleCheckoutSessionCompleted(
     return;
   }
 
-  const subscription = await stripe.subscriptions.retrieve(session.subscription);
+  const stripeClient = requireStripe();
+  const subscription = await stripeClient.subscriptions.retrieve(session.subscription);
   const userId = session.metadata?.userId;
 
   if (!userId) {
@@ -246,7 +251,7 @@ async function handleCheckoutSessionCompleted(
   }
 
   // Update the user's profile with the subscription details
-  await supabase
+  await (supabase as any)
     .from('profiles')
     .update({
       subscription_tier: SUBSCRIPTION_PLANS.PRO,
@@ -271,11 +276,12 @@ async function handleSubscriptionUpdated(
   const customerId = subscription.customer as string;
 
   // Find the user with this customer ID
-  const { data: profile } = await supabase
+  const { data } = await (supabase as any)
     .from('profiles')
     .select('user_id')
     .eq('stripe_customer_id', customerId)
     .single();
+  const profile = data as { user_id?: string } | null;
 
   if (!profile) {
     console.error('No user found with customer ID:', customerId);
@@ -303,7 +309,9 @@ async function handleSubscriptionUpdated(
   }
 
   // Update the user's profile with the subscription details
-  await supabase
+  if (!profile?.user_id) return;
+
+  await (supabase as any)
     .from('profiles')
     .update({
       subscription_status: status,
@@ -324,11 +332,12 @@ async function handleSubscriptionDeleted(
   const customerId = subscription.customer as string;
 
   // Find the user with this customer ID
-  const { data: profile } = await supabase
+  const { data } = await (supabase as any)
     .from('profiles')
     .select('user_id')
     .eq('stripe_customer_id', customerId)
     .single();
+  const profile = data as { user_id?: string } | null;
 
   if (!profile) {
     console.error('No user found with customer ID:', customerId);
@@ -336,7 +345,9 @@ async function handleSubscriptionDeleted(
   }
 
   // Update the user's profile to revert to free tier
-  await supabase
+  if (!profile?.user_id) return;
+
+  await (supabase as any)
     .from('profiles')
     .update({
       subscription_tier: SUBSCRIPTION_PLANS.FREE,
@@ -356,11 +367,16 @@ async function handleSubscriptionDeleted(
 export async function hasEnoughCredits(userId: string): Promise<boolean> {
   try {
     // Get the user's profile
-    const { data: profile } = await supabase
+    const { data } = await (supabase as any)
       .from('profiles')
       .select('ai_credits, subscription_tier, subscription_status')
       .eq('user_id', userId)
       .single();
+    const profile = data as {
+      ai_credits?: number;
+      subscription_tier?: string;
+      subscription_status?: string;
+    } | null;
 
     if (!profile) {
       return false;
@@ -375,7 +391,7 @@ export async function hasEnoughCredits(userId: string): Promise<boolean> {
     }
 
     // Check if the user has any credits left
-    return profile.ai_credits > 0;
+    return (profile.ai_credits ?? 0) > 0;
   } catch (error) {
     console.error('Error checking credits:', error);
     return false;
@@ -390,11 +406,16 @@ export async function hasEnoughCredits(userId: string): Promise<boolean> {
 export async function deductCredit(userId: string): Promise<boolean> {
   try {
     // Get the user's profile
-    const { data: profile } = await supabase
+    const { data } = await (supabase as any)
       .from('profiles')
       .select('ai_credits, subscription_tier, subscription_status')
       .eq('user_id', userId)
       .single();
+    const profile = data as {
+      ai_credits?: number;
+      subscription_tier?: string;
+      subscription_status?: string;
+    } | null;
 
     if (!profile) {
       return false;
@@ -409,14 +430,14 @@ export async function deductCredit(userId: string): Promise<boolean> {
     }
 
     // Check if the user has any credits left
-    if (profile.ai_credits <= 0) {
+    if ((profile.ai_credits ?? 0) <= 0) {
       return false;
     }
 
     // Deduct a credit
-    await supabase
+    await (supabase as any)
       .from('profiles')
-      .update({ ai_credits: profile.ai_credits - 1 } as any)
+      .update({ ai_credits: (profile.ai_credits ?? 0) - 1 } as any)
       .eq('user_id', userId);
 
     return true;

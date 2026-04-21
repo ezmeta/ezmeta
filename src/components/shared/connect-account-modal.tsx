@@ -33,7 +33,7 @@ export function ConnectAccountModal({ isOpen, onClose, userId }: ConnectAccountM
       }
 
       // Update the user's profile with the Meta access token
-      const { error: updateError } = await supabase
+      const { error: updateError } = await (supabase as any)
         .from('profiles')
         .update({
           meta_access_token: metaToken,
@@ -66,7 +66,7 @@ export function ConnectAccountModal({ isOpen, onClose, userId }: ConnectAccountM
       }
 
       // Update the user's profile with the OpenRouter API key
-      const { error: updateError } = await supabase
+      const { error: updateError } = await (supabase as any)
         .from('profiles')
         .update({
           openrouter_api_key: openrouterKey,

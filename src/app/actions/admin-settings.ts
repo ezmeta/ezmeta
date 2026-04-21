@@ -27,6 +27,15 @@ export type SiteSettingsMap = {
   alert_banner_text_en: string;
 };
 
+export type FaqItem = {
+  id: string;
+  question_bm: string;
+  answer_bm: string;
+  question_en: string;
+  answer_en: string;
+  sort_order: number;
+};
+
 const DEFAULT_SETTINGS: SiteSettingsMap = {
   hero_headline_bm: 'Hentikan Pembaziran Bajet Iklan. Biar AI Optimumkan Meta Ads Anda.',
   hero_headline_en: 'Stop Wasting Ad Spend. Let AI Optimize Your Meta Ads.',
@@ -112,6 +121,77 @@ const DEFAULT_SETTINGS: SiteSettingsMap = {
   alert_banner_text_en: '🚀 New: AI Creative Studio now supports video script generation.',
 };
 
+const DEFAULT_FAQS: FaqItem[] = [
+  {
+    id: 'default-1',
+    question_bm: 'Adakah token API Meta saya selamat?',
+    answer_bm: 'Ya. Token anda disimpan secara selamat dan hanya digunakan untuk sinkronisasi data iklan yang dibenarkan.',
+    question_en: 'Is my Meta API token secure?',
+    answer_en: 'Yes. Your token is stored securely and used only for authorized ad-data synchronization.',
+    sort_order: 1,
+  },
+  {
+    id: 'default-2',
+    question_bm: 'Bagaimana polisi bayaran langganan?',
+    answer_bm: 'Langganan dikenakan secara bulanan. Anda boleh naik taraf, turun taraf, atau batalkan mengikut kitaran semasa.',
+    question_en: 'How does subscription billing work?',
+    answer_en: 'Subscriptions are billed monthly. You can upgrade, downgrade, or cancel based on your current billing cycle.',
+    sort_order: 2,
+  },
+  {
+    id: 'default-3',
+    question_bm: 'Adakah AI benar-benar membantu ROI?',
+    answer_bm: 'AI membantu mengenal pasti iklan berprestasi rendah, mengesan creative fatigue, dan mencadangkan tindakan untuk meningkatkan ROI.',
+    question_en: 'Can AI really improve ROI?',
+    answer_en: 'AI helps identify underperforming ads, detect creative fatigue, and recommend actions to improve ROI.',
+    sort_order: 3,
+  },
+];
+
+const SUPABASE_QUERY_TIMEOUT_MS = 2500;
+
+function timeoutController(ms: number = SUPABASE_QUERY_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return {
+    signal: controller.signal,
+    clear: () => clearTimeout(timer),
+  };
+}
+
+export async function getFaqs(): Promise<FaqItem[]> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(supabaseConfig.url, supabaseConfig.anonKey, {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+      },
+    });
+
+    const timeout = timeoutController();
+    const { data, error } = await (supabase as any)
+      .from('faqs')
+      .select('*')
+      .order('sort_order', { ascending: true })
+      .abortSignal(timeout.signal);
+    timeout.clear();
+
+    if (error || !data || data.length === 0) {
+      if (error) {
+        console.warn('FAQ fetch failed; using fallback FAQs.');
+      }
+      return DEFAULT_FAQS;
+    }
+
+    return data as FaqItem[];
+  } catch (error) {
+    console.warn('FAQ fetch timeout/error; using fallback FAQs.');
+    return DEFAULT_FAQS;
+  }
+}
+
 export async function getSiteSettings(): Promise<SiteSettingsMap> {
   try {
     const cookieStore = await cookies();
@@ -123,6 +203,7 @@ export async function getSiteSettings(): Promise<SiteSettingsMap> {
       },
     });
 
+    const timeout = timeoutController();
     const { data, error } = await (supabase as any)
       .from('site_settings')
       .select('key, value')
@@ -143,11 +224,13 @@ export async function getSiteSettings(): Promise<SiteSettingsMap> {
         'contact_whatsapp',
         'alert_banner_text_bm',
         'alert_banner_text_en',
-      ]);
+      ])
+      .abortSignal(timeout.signal);
+    timeout.clear();
 
     if (error || !data) {
       if (error) {
-        console.error('Error fetching site settings:', error);
+        console.warn('Site settings fetch failed; using fallback settings.');
       }
       return DEFAULT_SETTINGS;
     }
@@ -196,7 +279,7 @@ export async function getSiteSettings(): Promise<SiteSettingsMap> {
 
     return mapped;
   } catch (error) {
-    console.error('Unexpected error fetching site settings:', error);
+    console.warn('Site settings fetch timeout/error; using fallback settings.');
     return DEFAULT_SETTINGS;
   }
 }
@@ -248,6 +331,7 @@ export async function saveSiteSettings(formData: FormData): Promise<void> {
     const contact_whatsapp = String(formData.get('contact_whatsapp') || DEFAULT_SETTINGS.contact_whatsapp);
     const alert_banner_text_bm = String(formData.get('alert_banner_text_bm') || DEFAULT_SETTINGS.alert_banner_text_bm);
     const alert_banner_text_en = String(formData.get('alert_banner_text_en') || DEFAULT_SETTINGS.alert_banner_text_en);
+    const faqs_payload = String(formData.get('faqs_payload') || '');
 
     const toBenefitsArray = (value: string): string[] =>
       value
@@ -282,16 +366,65 @@ export async function saveSiteSettings(formData: FormData): Promise<void> {
       { key: 'alert_banner_text_en', value: { text: alert_banner_text_en } },
     ];
 
-    const { error } = await (supabase as any).from('site_settings').upsert(payload, { onConflict: 'key' });
+    const parsedFaqs = faqs_payload
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line, index) => {
+        const [question_bm, answer_bm, question_en, answer_en] = line.split('||').map((part) => part?.trim() || '');
+        return {
+          question_bm,
+          answer_bm,
+          question_en,
+          answer_en,
+          sort_order: index + 1,
+        };
+      })
+      .filter((item) => item.question_bm && item.answer_bm && item.question_en && item.answer_en);
+
+    const upsertTimeout = timeoutController(4000);
+    const { error } = await (supabase as any)
+      .from('site_settings')
+      .upsert(payload, { onConflict: 'key' })
+      .abortSignal(upsertTimeout.signal);
+    upsertTimeout.clear();
 
     if (error) {
       console.error('Error saving site settings:', error);
-      return;
+      redirect('/admin/settings?status=error');
+    }
+
+    const deleteTimeout = timeoutController(4000);
+    const { error: deleteFaqError } = await (supabase as any)
+      .from('faqs')
+      .delete()
+      .gte('sort_order', 0)
+      .abortSignal(deleteTimeout.signal);
+    deleteTimeout.clear();
+    if (deleteFaqError) {
+      console.error('Error clearing FAQs:', deleteFaqError);
+      redirect('/admin/settings?status=error');
+    }
+
+    if (parsedFaqs.length > 0) {
+      const insertTimeout = timeoutController(4000);
+      const { error: insertFaqError } = await (supabase as any)
+        .from('faqs')
+        .insert(parsedFaqs)
+        .abortSignal(insertTimeout.signal);
+      insertTimeout.clear();
+      if (insertFaqError) {
+        console.error('Error saving FAQs:', insertFaqError);
+        redirect('/admin/settings?status=error');
+      }
     }
 
     revalidatePath('/');
+    revalidatePath('/pricing');
     revalidatePath('/admin/settings');
+    redirect('/admin/settings?status=saved');
   } catch (error) {
     console.error('Unexpected error saving settings:', error);
+    redirect('/admin/settings?status=error');
   }
 }

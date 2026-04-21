@@ -55,8 +55,9 @@ export async function getUserAdAccounts(userId: string): Promise<AdAccount[]> {
         .eq('meta_ad_account_id', account.account_id);
       
       if (existingAccounts && existingAccounts.length > 0) {
+        const existingAccount = existingAccounts[0] as { id: string };
         // Update existing account
-        const { data: updatedAccount } = await supabase
+        const { data: updatedAccount } = await (supabase as any)
           .from('ad_accounts')
           .update({
             account_name: account.name,
@@ -64,7 +65,7 @@ export async function getUserAdAccounts(userId: string): Promise<AdAccount[]> {
             timezone: account.timezone_name,
             status: account.account_status === 1 ? 'active' : 'inactive',
           })
-          .eq('id', existingAccounts[0].id)
+          .eq('id', existingAccount.id)
           .select();
         
         if (updatedAccount && updatedAccount.length > 0) {
@@ -72,7 +73,7 @@ export async function getUserAdAccounts(userId: string): Promise<AdAccount[]> {
         }
       } else {
         // Insert new account
-        const { data: newAccount } = await supabase
+        const { data: newAccount } = await (supabase as any)
           .from('ad_accounts')
           .insert({
             user_id: userId,
@@ -153,8 +154,9 @@ export async function getAdInsights(
         .eq('date', insight.date);
       
       if (existingInsights && existingInsights.length > 0) {
+        const existingInsight = existingInsights[0] as { id: string };
         // Update existing insight
-        await supabase
+        await (supabase as any)
           .from('ad_metrics')
           .update({
             campaign_name: insight.campaign_name,
@@ -166,10 +168,10 @@ export async function getAdInsights(
             impressions: insight.impressions,
             clicks: insight.clicks,
           })
-          .eq('id', existingInsights[0].id);
+          .eq('id', existingInsight.id);
       } else {
         // Insert new insight
-        await supabase
+        await (supabase as any)
           .from('ad_metrics')
           .insert(insight);
       }

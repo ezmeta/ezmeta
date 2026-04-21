@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { saveSiteSettings, getSiteSettings, unlockAdmin } from '@/app/actions/admin-settings';
+import { saveSiteSettings, getSiteSettings, getFaqs, unlockAdmin } from '@/app/actions/admin-settings';
+import { SaveStatusToast } from '@/components/admin/save-status-toast';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +10,11 @@ export default async function AdminSettingsPage() {
   const isUnlocked = cookieStore.get('admin_auth')?.value === 'true';
   const lang = cookieStore.get('ez_lang')?.value === 'en' ? 'en' : 'bm';
   const settings = await getSiteSettings();
+  const faqs = await getFaqs();
+  const faqsPayload = faqs
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((item) => `${item.question_bm}||${item.answer_bm}||${item.question_en}||${item.answer_en}`)
+    .join('\n');
 
   const copy = {
     bm: {
@@ -39,6 +45,7 @@ export default async function AdminSettingsPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
+      <SaveStatusToast />
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 p-6 md:grid-cols-[260px_1fr]">
         <aside className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
           <h2 className="mb-4 text-lg font-semibold">{copy.adminCms}</h2>
@@ -299,6 +306,22 @@ export default async function AdminSettingsPage() {
                   className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500"
                 />
               </div>
+            </div>
+
+            <div>
+              <label htmlFor="faqs_payload" className="mb-1 block text-sm font-medium text-slate-200">
+                FAQ Editor (BM_Q||BM_A||EN_Q||EN_A, one item per line)
+              </label>
+              <textarea
+                id="faqs_payload"
+                name="faqs_payload"
+                defaultValue={faqsPayload}
+                rows={10}
+                className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500"
+              />
+              <p className="mt-1 text-xs text-slate-400">
+                Edit existing FAQ, remove a line to delete, or add a line to create a new FAQ item.
+              </p>
             </div>
 
             <button

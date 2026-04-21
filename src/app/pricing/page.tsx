@@ -1,250 +1,183 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Sparkles, Star, Zap } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createCheckoutSession } from '@/lib/stripe';
 import { SUBSCRIPTION_PRICES, CREDITS_PER_PLAN } from '@/lib/stripe';
-import { formatCurrency } from '@/lib/utils';
 import { supabase } from '@/db/client';
+import { useLanguage } from '@/components/providers/language-provider';
+import { landingDictionary } from '@/lib/i18n/landing';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { buildPricingModel, EMPTY_PRICING_SETTINGS, type PricingSettings } from '@/lib/pricing-model';
 
-interface PricingPlanProps {
-  name: string;
-  description: string;
-  price: number | null;
-  interval: string;
-  features: string[];
-  credits: number;
-  buttonText: string;
-  buttonVariant: 'default' | 'outline';
-  popular?: boolean;
-  disabled?: boolean;
-}
+type FaqItem = {
+  id: string;
+  question_bm: string;
+  answer_bm: string;
+  question_en: string;
+  answer_en: string;
+  sort_order: number;
+};
 
-const PricingPlan = ({
-  name,
-  description,
-  price,
-  interval,
-  features,
-  credits,
-  buttonText,
-  buttonVariant,
-  popular = false,
-  disabled = false,
-}: PricingPlanProps) => {
+export default function PricingPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const { lang } = useLanguage();
+  const t = landingDictionary[lang];
 
-  const handleSubscribe = async () => {
+  const [settings, setSettings] = useState<PricingSettings>(EMPTY_PRICING_SETTINGS);
+  const [faqs, setFaqs] = useState<FaqItem[]>([]);
+  const [loadingPlan, setLoadingPlan] = useState<'starter' | 'pro' | null>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [settingsRes, faqsRes] = await Promise.all([fetch('/api/site-settings', { cache: 'no-store' }), fetch('/api/faqs', { cache: 'no-store' })]);
+
+        if (settingsRes.ok) {
+          const data = (await settingsRes.json()) as PricingSettings;
+          setSettings(data);
+        }
+
+        if (faqsRes.ok) {
+          const faqData = (await faqsRes.json()) as FaqItem[];
+          setFaqs(faqData);
+        }
+      } catch (error) {
+        console.error('Failed to load pricing data:', error);
+      }
+    }
+
+    void loadData();
+  }, []);
+
+  const { plans, allFeatures } = useMemo(() => buildPricingModel(settings, lang), [settings, lang]);
+
+  async function handleSubscribe(plan: 'starter' | 'pro' | 'agency') {
+    if (plan === 'agency') {
+      window.open(`https://wa.me/${settings.contact_whatsapp.replace(/[^\d]/g, '')}`, '_blank');
+      return;
+    }
+
     try {
-      setLoading(true);
+      setLoadingPlan(plan);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      // Get the current user
-      const { data: { user } } = await supabase.auth.getUser();
-      
       if (!user) {
-        // Redirect to login if not authenticated
         router.push('/login?redirect=/pricing');
         return;
       }
 
-      // Get the user's profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('user_id', user.id)
-        .single();
+      const { data: profile } = await (supabase as any).from('profiles').select('email').eq('user_id', user.id).single();
+      const profileEmail = (profile as { email?: string } | null)?.email;
+      if (!profileEmail) throw new Error('User profile not found');
 
-      if (!profile) {
-        throw new Error('User profile not found');
-      }
-
-      // For free plan, just update the database
-      if (name === 'Starter') {
-        await supabase
+      if (plan === 'starter') {
+        await (supabase as any)
           .from('profiles')
           .update({
             subscription_tier: 'free',
             subscription_status: 'active',
             ai_credits: CREDITS_PER_PLAN.free,
-            ai_credits_reset_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+            ai_credits_reset_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
           } as any)
           .eq('user_id', user.id);
-        
         router.push('/dashboard');
         return;
       }
 
-      // For paid plans, create a checkout session
-      const priceId = SUBSCRIPTION_PRICES.PRO.id;
       const successUrl = `${window.location.origin}/dashboard?subscription=success`;
       const cancelUrl = `${window.location.origin}/pricing?subscription=canceled`;
-
-      const checkoutUrl = await createCheckoutSession(
-        user.id,
-        profile.email,
-        priceId,
-        successUrl,
-        cancelUrl
-      );
-
-      // Redirect to checkout
-      if (checkoutUrl) {
-        window.location.href = checkoutUrl;
-      }
+      const checkoutUrl = await createCheckoutSession(user.id, profileEmail, SUBSCRIPTION_PRICES.PRO.id, successUrl, cancelUrl);
+      if (checkoutUrl) window.location.href = checkoutUrl;
     } catch (error) {
       console.error('Error subscribing:', error);
-      alert('Failed to subscribe. Please try again.');
     } finally {
-      setLoading(false);
+      setLoadingPlan(null);
     }
-  };
+  }
 
   return (
-    <div className={`rounded-lg border ${popular ? 'border-blue-500 shadow-lg' : 'border-border'} p-6 flex flex-col justify-between relative overflow-hidden`}>
-      {popular && (
-        <>
-          <div className="absolute top-0 right-0 -mt-2 -mr-2 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium">
-            Popular
-          </div>
-          <div className="absolute -top-6 -left-6 w-12 h-12 bg-blue-500/10 rounded-full"></div>
-          <div className="absolute -bottom-6 -right-6 w-16 h-16 bg-blue-500/10 rounded-full"></div>
-        </>
-      )}
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          {name === "Starter" ? (
-            <Star className="h-5 w-5 text-blue-500" />
-          ) : (
-            <Sparkles className="h-5 w-5 text-blue-500" />
-          )}
-          <h3 className="text-lg font-semibold">{name}</h3>
+    <main className="min-h-[calc(100vh-128px)] bg-transparent text-slate-100">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.14),_transparent_42%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.08)_1px,transparent_1px)] bg-[size:42px_42px] opacity-15" />
+
+      <section className="relative px-4 pb-12 pt-20 md:pt-24">
+        <div className="mx-auto max-w-5xl text-center">
+          <h1 className="text-3xl font-extrabold tracking-tight text-white md:text-5xl">{t.pricingTitle}</h1>
+          <p className="mx-auto mt-4 max-w-2xl text-slate-300">
+            {lang === 'bm'
+              ? 'Semua pakej diselaras secara automatik terus dari CMS Admin anda.'
+              : 'All plans are synced automatically from your Admin CMS settings.'}
+          </p>
         </div>
-        <p className="text-sm text-muted-foreground mt-1">{description}</p>
-        <div className="mt-4 flex items-baseline">
-          {price !== null ? (
-            <>
-              <span className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">{formatCurrency(price / 100)}</span>
-              <span className="text-sm text-muted-foreground ml-1">/{interval}</span>
-            </>
-          ) : (
-            <span className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">Free</span>
-          )}
-        </div>
-        <div className="mt-2 text-sm text-muted-foreground flex items-center">
-          <Zap className="h-4 w-4 text-blue-500 mr-1" />
-          <span className="font-medium">{credits}</span> AI credits per month
-        </div>
-        <ul className="mt-6 space-y-3">
-          {features.map((feature) => (
-            <li key={feature} className="flex items-start">
-              <Check className="h-5 w-5 text-blue-500 mr-2 flex-shrink-0" />
-              <span className="text-sm">{feature}</span>
-            </li>
+      </section>
+
+      <section className="relative px-4 py-10">
+        <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
+          {plans.map((plan) => (
+            <div
+              key={plan.key}
+              className={`rounded-2xl border bg-white/5 p-6 backdrop-blur-xl transition ${plan.popular ? 'border-emerald-400 shadow-[0_0_45px_rgba(16,185,129,0.25)]' : 'border-slate-800 hover:border-emerald-500/50'}`}
+            >
+              {plan.popular ? <div className="mb-3 inline-block rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-300">{t.mostPopular}</div> : null}
+              <h3 className="text-xl font-bold text-white">{plan.name}</h3>
+              <p className="mt-1 text-sm text-slate-400">{plan.key === 'starter' ? t.starterSubtitle : plan.key === 'pro' ? t.proSubtitle : t.agencySubtitle}</p>
+              <div className="mt-4">
+                <span className="text-4xl font-extrabold text-white">RM{plan.price}</span>
+                <span className="ml-1 text-sm text-slate-400">/month</span>
+              </div>
+
+              <ul className="mt-6 space-y-2">
+                {allFeatures.map((feature) => {
+                  const included = plan.benefits.includes(feature);
+                  return (
+                    <li key={`${plan.key}-${feature}`} className={`flex items-start gap-2 text-sm ${included ? 'text-slate-200' : 'text-slate-500'}`}>
+                      {included ? <Check className="mt-0.5 h-4 w-4 text-emerald-400" /> : <X className="mt-0.5 h-4 w-4 text-slate-600" />}
+                      <span>{feature}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              <Button
+                className="mt-6 w-full bg-emerald-500 text-slate-950 hover:bg-emerald-400"
+                onClick={() => void handleSubscribe(plan.key)}
+                disabled={loadingPlan !== null}
+              >
+                {loadingPlan === plan.key
+                  ? lang === 'bm'
+                    ? 'Memproses...'
+                    : 'Processing...'
+                  : plan.key === 'starter'
+                    ? t.starterCta
+                    : plan.key === 'pro'
+                      ? t.proCta
+                      : t.agencyCta}
+              </Button>
+            </div>
           ))}
-        </ul>
-      </div>
-      <Button
-        variant={buttonVariant}
-        className={`mt-6 w-full ${buttonVariant === 'default' ? 'bg-blue-600 hover:bg-blue-700' : 'border-blue-500 text-blue-600 hover:bg-blue-50'}`}
-        onClick={handleSubscribe}
-        disabled={disabled || loading}
-      >
-        {loading ? 'Processing...' : buttonText}
-      </Button>
-    </div>
-  );
-};
-
-export default function PricingPage() {
-  return (
-    <div className="container max-w-6xl py-12">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">Simple, Transparent Pricing</h1>
-        <p className="mt-3 text-lg text-muted-foreground">
-          Choose the plan that's right for you and start optimizing your Meta ads with AI.
-        </p>
-      </div>
-
-      <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-        <PricingPlan
-          name="Starter"
-          description="Perfect for trying out EZ Meta's AI capabilities"
-          price={null}
-          interval="month"
-          credits={10}
-          features={[
-            "10 AI creative generations per month",
-            "Meta Ads performance tracking",
-            "Basic ad metrics analysis",
-            "Single Meta Ad account",
-            "7-day data history"
-          ]}
-          buttonText="Get Started Free"
-          buttonVariant="outline"
-        />
-
-        <PricingPlan
-          name="Pro"
-          description="For marketers who need unlimited AI power"
-          price={4900}
-          interval="month"
-          credits={9999}
-          features={[
-            "Unlimited AI creative generations",
-            "Advanced performance analytics",
-            "Multiple Meta Ad accounts",
-            "30-day data history",
-            "Priority support",
-            "Custom AI training on your brand voice"
-          ]}
-          buttonText="Subscribe Now"
-          buttonVariant="default"
-          popular={true}
-        />
-      </div>
-
-      <div className="mt-12 text-center">
-        <h2 className="text-xl font-semibold">Need a custom plan?</h2>
-        <p className="mt-2 text-muted-foreground">
-          Contact us for enterprise pricing and custom solutions.
-        </p>
-        <Button variant="link" className="mt-4">
-          Contact Sales
-        </Button>
-      </div>
-
-      <div className="mt-16 border-t pt-8">
-        <h2 className="text-xl font-semibold">Frequently Asked Questions</h2>
-        <div className="mt-6 grid gap-6">
-          <div>
-            <h3 className="font-medium">What are AI credits?</h3>
-            <p className="mt-1 text-muted-foreground">
-              AI credits are used each time you generate creative content using our AI. Each generation costs 1 credit.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-medium">How do I upgrade or downgrade my plan?</h3>
-            <p className="mt-1 text-muted-foreground">
-              You can change your plan at any time from your account settings. Upgrades take effect immediately, while downgrades will take effect at the end of your billing cycle.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-medium">Do unused credits roll over?</h3>
-            <p className="mt-1 text-muted-foreground">
-              No, AI credits reset at the beginning of each billing cycle. Pro plan subscribers have unlimited credits.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-medium">Can I cancel my subscription?</h3>
-            <p className="mt-1 text-muted-foreground">
-              Yes, you can cancel your subscription at any time from your account settings. You'll continue to have access to your plan until the end of your current billing cycle.
-            </p>
-          </div>
         </div>
-      </div>
-    </div>
+      </section>
+
+      <section className="px-4 py-14">
+        <div className="mx-auto max-w-4xl">
+          <h2 className="mb-4 text-center text-2xl font-bold text-white">{t.faqTitle}</h2>
+          <Accordion type="single" collapsible className="space-y-3">
+            {faqs.map((faq) => (
+              <AccordionItem key={faq.id} value={faq.id} className="rounded-lg border border-slate-800 bg-slate-900/60 px-4">
+                <AccordionTrigger className="text-left text-slate-100 hover:no-underline">
+                  {lang === 'bm' ? faq.question_bm : faq.question_en}
+                </AccordionTrigger>
+                <AccordionContent className="text-slate-300">{lang === 'bm' ? faq.answer_bm : faq.answer_en}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
+    </main>
   );
 }
