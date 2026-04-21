@@ -610,10 +610,18 @@ export async function saveSiteSettings(formData: FormData): Promise<void> {
     }
 
     if (parsedFaqs.length > 0) {
+      const faqRows = parsedFaqs.map((item) => ({
+        question_bm: item.question_bm,
+        answer_bm: item.answer_bm,
+        question_en: item.question_en,
+        answer_en: item.answer_en,
+        sort_order: item.sort_order,
+      }));
+
       const insertTimeout = timeoutController(4000);
       const { error: insertFaqError } = await (supabase as any)
         .from('faqs')
-        .insert(parsedFaqs)
+        .insert(faqRows)
         .abortSignal(insertTimeout.signal);
       insertTimeout.clear();
       if (insertFaqError) {

@@ -47,7 +47,7 @@ export default async function AdminSettingsPage() {
     <div className="cyber-grid min-h-screen bg-slate-950 text-white">
       <SaveStatusToast />
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 p-6 md:grid-cols-[280px_1fr]">
-        <aside className="cyber-panel h-fit p-4">
+        <aside className="cyber-panel h-fit p-4 md:sticky md:top-6">
           <h2 className="mb-4 text-lg font-semibold text-white">{copy.adminCms}</h2>
           <nav className="space-y-2 text-sm">
             <Link href="/admin" className="block cursor-pointer rounded-md px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white active:opacity-80">
@@ -67,10 +67,18 @@ export default async function AdminSettingsPage() {
           <div className="mt-6 rounded-lg border border-emerald-400/20 bg-slate-900/60 p-3 text-xs text-slate-300">
             <p className="font-semibold uppercase tracking-[0.14em] text-emerald-200">Struktur Tapak</p>
             <ul className="mt-2 space-y-1">
-              <li>01 · Pricing & Plans</li>
-              <li>02 · Headline & Hero</li>
-              <li>03 · Benefits & FAQ</li>
-              <li>04 · Marketing Pop-up</li>
+              <li>
+                <a href="#module-pricing" className="hover:text-emerald-200">01 · Pricing & Plans</a>
+              </li>
+              <li>
+                <a href="#module-content" className="hover:text-emerald-200">02 · Headline & Hero</a>
+              </li>
+              <li>
+                <a href="#module-faq" className="hover:text-emerald-200">03 · Benefits & FAQ</a>
+              </li>
+              <li>
+                <a href="#module-popup" className="hover:text-emerald-200">04 · Marketing Pop-up</a>
+              </li>
             </ul>
           </div>
         </aside>
@@ -103,8 +111,8 @@ export default async function AdminSettingsPage() {
             </form>
           ) : (
 
-          <form action={saveSiteSettings} className="space-y-5">
-            <section className="rounded-xl border border-emerald-400/20 bg-slate-950/60 p-5">
+          <form action={saveSiteSettings} className="space-y-6">
+            <section id="module-pricing" className="scroll-mt-24 rounded-xl border border-emerald-400/20 bg-slate-950/60 p-5">
               <p className="text-xs uppercase tracking-[0.16em] text-emerald-200">Module 01</p>
               <h3 className="mt-1 text-xl font-semibold text-white">Pricing & Plan Manager</h3>
               <p className="mt-1 text-sm text-slate-400">Edit monthly pricing, plan labels, descriptions, account offers, and WhatsApp endpoint.</p>
@@ -254,7 +262,7 @@ export default async function AdminSettingsPage() {
               </div>
             </section>
 
-            <section className="rounded-xl border border-emerald-400/20 bg-slate-950/60 p-5">
+            <section id="module-content" className="scroll-mt-24 rounded-xl border border-emerald-400/20 bg-slate-950/60 p-5">
               <p className="text-xs uppercase tracking-[0.16em] text-emerald-200">Module 02</p>
               <h3 className="mt-1 text-xl font-semibold text-white">Site Content Manager · Headline Editor</h3>
               <p className="mt-1 text-sm text-slate-400">Update hero headline and subheadline for BM/EN with instant save persistence.</p>
@@ -336,7 +344,7 @@ export default async function AdminSettingsPage() {
               </div>
             </section>
 
-            <section className="rounded-xl border border-slate-700/80 bg-slate-950/60 p-5">
+            <section id="module-faq" className="scroll-mt-24 rounded-xl border border-slate-700/80 bg-slate-950/60 p-5">
               <p className="text-xs uppercase tracking-[0.16em] text-slate-300">Module 03</p>
               <h3 className="mt-1 text-xl font-semibold text-white">Benefits & FAQ Manager</h3>
               <p className="mt-1 text-sm text-slate-400">Maintain benefit bullets and FAQ records used by landing and pricing pages.</p>
@@ -432,7 +440,7 @@ export default async function AdminSettingsPage() {
             </div>
             </section>
 
-            <section className="rounded-xl border border-slate-700/80 bg-slate-950/60 p-5">
+            <section id="module-popup" className="scroll-mt-24 rounded-xl border border-slate-700/80 bg-slate-950/60 p-5">
               <p className="text-xs uppercase tracking-[0.16em] text-slate-300">Module 04</p>
               <h3 className="mt-1 text-xl font-semibold text-white">Dynamic Marketing Pop-up</h3>
               <p className="mt-1 text-sm text-slate-400">Configure popup copy and CTA destination. Landing rendering integration is next step.</p>
