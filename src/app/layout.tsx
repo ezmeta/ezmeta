@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { LanguageProvider } from '@/components/providers/language-provider';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SiteFooter } from '@/components/layout/site-footer';
+import { GlobalCursor } from '@/components/shared/global-cursor';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -33,6 +34,7 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <LanguageProvider>
             <div className="min-h-screen bg-slate-950 text-slate-100">
+              <GlobalCursor />
               <SiteHeader />
               <div className="relative">
                 <div

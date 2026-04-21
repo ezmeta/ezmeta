@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { motion, useMotionValue, useSpring } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Activity,
   ArrowRight,
@@ -51,24 +51,6 @@ export default function Home() {
   const { lang } = useLanguage();
   const [settings, setSettings] = useState<LandingSettings>(FALLBACK_SETTINGS);
   const [faqs, setFaqs] = useState<FaqItem[]>([]);
-  const cursorX = useMotionValue(-100);
-  const cursorY = useMotionValue(-100);
-  const smoothX = useSpring(cursorX, { stiffness: 420, damping: 34, mass: 0.35 });
-  const smoothY = useSpring(cursorY, { stiffness: 420, damping: 34, mass: 0.35 });
-  const trailX = useSpring(cursorX, { stiffness: 180, damping: 28, mass: 0.8 });
-  const trailY = useSpring(cursorY, { stiffness: 180, damping: 28, mass: 0.8 });
-
-  useEffect(() => {
-    const onMove = (event: MouseEvent) => {
-      cursorX.set(event.clientX);
-      cursorY.set(event.clientY);
-    };
-
-    window.addEventListener('mousemove', onMove);
-    return () => {
-      window.removeEventListener('mousemove', onMove);
-    };
-  }, [cursorX, cursorY]);
 
   useEffect(() => {
     let active = true;
@@ -141,17 +123,6 @@ export default function Home() {
 
   return (
     <main className="cyber-grid relative min-h-[calc(100vh-128px)] overflow-hidden text-slate-100">
-      <motion.div
-        aria-hidden
-        className="pointer-events-none fixed left-0 top-0 z-[120] h-4 w-4 rounded-full border border-emerald-200/90 bg-emerald-300/20 shadow-[0_0_28px_rgba(0,229,160,0.75)] mix-blend-difference"
-        style={{ x: smoothX, y: smoothY, translateX: '-50%', translateY: '-50%' }}
-      />
-      <motion.div
-        aria-hidden
-        className="pointer-events-none fixed left-0 top-0 z-[119] h-16 w-16 rounded-full bg-emerald-300/20 blur-md mix-blend-exclusion"
-        style={{ x: trailX, y: trailY, translateX: '-50%', translateY: '-50%' }}
-      />
-
       <div className="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-emerald-400/20 blur-[120px]" />
       <div className="pointer-events-none absolute -right-20 top-40 h-80 w-80 rounded-full bg-sky-400/15 blur-[130px]" />
 

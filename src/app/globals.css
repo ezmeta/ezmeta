@@ -75,7 +75,6 @@
     background: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans), Inter, system-ui, sans-serif;
-    cursor: none;
     transition: background-color 150ms ease, color 150ms ease;
     background-image:
       radial-gradient(circle at 15% 0%, rgba(47, 242, 161, 0.1), transparent 28%),
@@ -83,13 +82,14 @@
       linear-gradient(180deg, #03050b 0%, #070b14 48%, #05070e 100%);
   }
 
-  a,
-  button,
-  input,
-  textarea,
-  select,
-  summary,
-  [role='button'] {
+  body.custom-cursor-active,
+  body.custom-cursor-active a,
+  body.custom-cursor-active button,
+  body.custom-cursor-active input,
+  body.custom-cursor-active textarea,
+  body.custom-cursor-active select,
+  body.custom-cursor-active summary,
+  body.custom-cursor-active [role='button'] {
     cursor: none;
   }
 
