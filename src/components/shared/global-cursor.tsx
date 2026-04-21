@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { motion, useMotionValue, useSpring } from 'framer-motion';
+import { usePathname } from 'next/navigation';
 
 export function GlobalCursor() {
+  const pathname = usePathname();
   const [enabled, setEnabled] = useState(false);
   const cursorX = useMotionValue(-100);
   const cursorY = useMotionValue(-100);
@@ -13,6 +15,14 @@ export function GlobalCursor() {
   const trailY = useSpring(cursorY, { stiffness: 180, damping: 28, mass: 0.8 });
 
   useEffect(() => {
+    const isProductivityRoute = pathname.startsWith('/admin') || pathname.startsWith('/dashboard');
+
+    if (isProductivityRoute) {
+      document.body.classList.remove('custom-cursor-active');
+      setEnabled(false);
+      return;
+    }
+
     const supportsFinePointer =
       typeof window !== 'undefined' &&
       typeof window.matchMedia === 'function' &&
@@ -41,7 +51,7 @@ export function GlobalCursor() {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseleave', onLeave);
     };
-  }, [cursorX, cursorY]);
+  }, [cursorX, cursorY, pathname]);
 
   if (!enabled) return null;
 

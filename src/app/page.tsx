@@ -54,6 +54,7 @@ export default function Home() {
   const { lang } = useLanguage();
   const [settings, setSettings] = useState<LandingSettings>(FALLBACK_SETTINGS);
   const [faqs, setFaqs] = useState<FaqItem[]>([]);
+  const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -89,18 +90,13 @@ export default function Home() {
       : heroSubheadline;
 
   const { plans, allFeatures } = useMemo(() => buildPricingModel(settings, lang), [settings, lang]);
-  const tickerItems = [
-    'AI TELEGRAM ALERTS',
-    'WINNING AD DETECTOR',
-    'CREATIVE FATIGUE MONITOR',
-    'BUDGET TRACKER',
-  ];
-
-  const planOffers: Record<'starter' | 'pro' | 'agency', { value: string; bonus: string }> = {
-    starter: { value: '2 Ad Accounts', bonus: 'Bonus: +1 Akaun' },
-    pro: { value: '5 Ad Accounts', bonus: 'Bonus: +2 Akaun' },
-    agency: { value: '10 Ad Accounts', bonus: 'Bonus: +3 Akaun' },
-  };
+  const tickerItems = useMemo(() => {
+    const source = lang === 'bm' ? settings.ticker_items_bm : settings.ticker_items_en;
+    const cleaned = source.map((item) => item.trim()).filter(Boolean);
+    return cleaned.length > 0
+      ? cleaned
+      : ['AI TELEGRAM ALERTS', 'WINNING AD DETECTOR', 'CREATIVE FATIGUE MONITOR', 'BUDGET TRACKER'];
+  }, [lang, settings.ticker_items_bm, settings.ticker_items_en]);
   const orderedComparisonFeatures = useMemo(
     () =>
       allFeatures.filter((feature) => {
@@ -184,6 +180,23 @@ export default function Home() {
     { id: 'q2', question_bm: t.faq2q, answer_bm: t.faq2a, question_en: t.faq2q, answer_en: t.faq2a, sort_order: 2 },
   ];
   const displayFaqs = faqs.length > 0 ? faqs : defaultFaqs;
+
+  useEffect(() => {
+    if (!settings.popup_enabled) return;
+    if (typeof window === 'undefined') return;
+    const storageKey = 'ezmeta_marketing_popup_seen';
+    if (window.sessionStorage.getItem(storageKey) === '1') return;
+
+    const timer = window.setTimeout(() => setShowPopup(true), 900);
+    return () => window.clearTimeout(timer);
+  }, [settings.popup_enabled]);
+
+  const closePopup = () => {
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem('ezmeta_marketing_popup_seen', '1');
+    }
+    setShowPopup(false);
+  };
 
   return (
     <main className="cyber-grid relative min-h-[calc(100vh-128px)] overflow-hidden text-slate-100">
@@ -398,9 +411,11 @@ export default function Home() {
                   <span className="inline-block rounded-full bg-emerald-400 px-3 py-1 text-xs font-semibold text-slate-950">{t.mostPopular}</span>
                 ) : null}
                 <h3 className="mt-4 text-xl font-semibold text-white">{plan.name}</h3>
-                <p className="mt-1 text-sm text-slate-400">{plan.key === 'starter' ? t.starterSubtitle : plan.key === 'pro' ? t.proSubtitle : t.agencySubtitle}</p>
-                <p className="mt-3 text-sm font-medium text-slate-100">{planOffers[plan.key].value}</p>
-                <p className="text-sm text-[#00FF94]">{planOffers[plan.key].bonus}</p>
+                <p className="mt-1 text-sm text-slate-400">{plan.description}</p>
+                {plan.accountOffer ? <p className="mt-3 text-sm font-medium text-slate-100">{plan.accountOffer}</p> : null}
+                <p className="text-sm text-[#00FF94]">
+                  {lang === 'bm' ? `Bonus: +${plan.bonusAccounts} Akaun` : `Bonus: +${plan.bonusAccounts} Accounts`}
+                </p>
                 <p className="mt-4 text-3xl font-bold text-emerald-200">
                   RM{plan.price}
                   <span className="ml-1 text-sm font-normal text-slate-400">/mo</span>
@@ -452,6 +467,50 @@ export default function Home() {
           </Accordion>
         </div>
       </section>
+
+      {showPopup ? (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className="cyber-panel w-full max-w-lg p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.16em] text-emerald-200">Limited Campaign</p>
+                <h3 className="mt-1 text-2xl font-semibold text-white">
+                  {lang === 'bm' ? settings.popup_headline_bm : settings.popup_headline_en}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={closePopup}
+                className="rounded-md border border-slate-700 p-1.5 text-slate-300 hover:text-white"
+                aria-label="Close popup"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <p className="mt-4 text-sm leading-7 text-slate-300">
+              {lang === 'bm' ? settings.popup_description_bm : settings.popup_description_en}
+            </p>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href={settings.popup_redirect_url || '/pricing'}
+                onClick={closePopup}
+                className="inline-flex w-full items-center justify-center rounded-md bg-emerald-400 px-4 py-2.5 font-semibold text-slate-950 hover:bg-emerald-300"
+              >
+                {lang === 'bm' ? settings.popup_button_text_bm : settings.popup_button_text_en}
+              </Link>
+              <button
+                type="button"
+                onClick={closePopup}
+                className="inline-flex w-full items-center justify-center rounded-md border border-slate-700 px-4 py-2.5 text-slate-200 hover:bg-slate-900"
+              >
+                {lang === 'bm' ? 'Nanti Dulu' : 'Maybe Later'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
