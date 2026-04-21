@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Crown, Radar, ShieldCheck, Sparkles } from 'lucide-react';
@@ -67,12 +69,6 @@ export default function PricingPage() {
       }),
     [uniqueFeatures]
   );
-
-  const planOffers: Record<'starter' | 'pro' | 'agency', { value: string; bonus: string }> = {
-    starter: { value: '2 Ad Accounts', bonus: 'Bonus: +1 Akaun' },
-    pro: { value: '5 Ad Accounts', bonus: 'Bonus: +2 Akaun' },
-    agency: { value: '10 Ad Accounts', bonus: 'Bonus: +3 Akaun' },
-  };
 
   const pageSubtitle =
     lang === 'bm'
@@ -204,9 +200,11 @@ export default function PricingPage() {
             >
               {plan.popular ? <div className="mb-3 inline-block rounded-full bg-emerald-400 px-3 py-1 text-xs font-semibold text-slate-950">{t.mostPopular}</div> : null}
               <h3 className="text-xl font-semibold text-white">{plan.name}</h3>
-              <p className="mt-1 text-sm text-slate-400">{plan.key === 'starter' ? t.starterSubtitle : plan.key === 'pro' ? t.proSubtitle : t.agencySubtitle}</p>
-              <p className="mt-3 text-sm font-medium text-slate-100">{planOffers[plan.key].value}</p>
-              <p className="text-sm text-[#00FF94]">{planOffers[plan.key].bonus}</p>
+              <p className="mt-1 text-sm text-slate-400">{plan.description}</p>
+              {plan.accountOffer ? <p className="mt-3 text-sm font-medium text-slate-100">{plan.accountOffer}</p> : null}
+              <p className="text-sm text-[#00FF94]">
+                {lang === 'bm' ? `Bonus: +${plan.bonusAccounts} Akaun` : `Bonus: +${plan.bonusAccounts} Accounts`}
+              </p>
               <div className="mt-4">
                 <span className="text-4xl font-extrabold text-emerald-100">RM{plan.price}</span>
                 <span className="ml-1 text-sm text-slate-400">/month</span>
