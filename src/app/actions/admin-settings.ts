@@ -230,6 +230,25 @@ const DEFAULT_FAQS: FaqItem[] = [
 
 const SUPABASE_QUERY_TIMEOUT_MS = 2500;
 
+function parseFaqPayload(raw: string): FaqItem[] {
+  return raw
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line, index) => {
+      const [question_bm, answer_bm, question_en, answer_en] = line.split('||').map((part) => part?.trim() || '');
+      return {
+        id: `payload-${index + 1}`,
+        question_bm,
+        answer_bm,
+        question_en,
+        answer_en,
+        sort_order: index + 1,
+      };
+    })
+    .filter((item) => item.question_bm && item.answer_bm && item.question_en && item.answer_en);
+}
+
 function timeoutController(ms: number = SUPABASE_QUERY_TIMEOUT_MS) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
@@ -258,14 +277,41 @@ export async function getFaqs(): Promise<FaqItem[]> {
       .abortSignal(timeout.signal);
     timeout.clear();
 
-    if (error || !data || data.length === 0) {
-      if (error) {
-        console.warn('FAQ fetch failed; using fallback FAQs.');
-      }
-      return DEFAULT_FAQS;
+    if (!error && data && data.length > 0) {
+      return data as FaqItem[];
     }
 
-    return data as FaqItem[];
+    // Fallback source: faqs_payload in site_settings (for environments where faqs table read may be restricted)
+    const settingsTimeout = timeoutController();
+    const { data: settingsData } = await (supabase as any)
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'faqs_payload')
+      .maybeSingle()
+      .abortSignal(settingsTimeout.signal);
+    settingsTimeout.clear();
+
+    const payloadItems = Array.isArray((settingsData as any)?.value?.items) ? ((settingsData as any).value.items as Array<any>) : [];
+    const parsedFromSettings = payloadItems
+      .map((item, index) => ({
+        id: String(item?.id ?? `settings-${index + 1}`),
+        question_bm: String(item?.question_bm ?? '').trim(),
+        answer_bm: String(item?.answer_bm ?? '').trim(),
+        question_en: String(item?.question_en ?? '').trim(),
+        answer_en: String(item?.answer_en ?? '').trim(),
+        sort_order: Number(item?.sort_order ?? index + 1),
+      }))
+      .filter((item) => item.question_bm && item.answer_bm && item.question_en && item.answer_en)
+      .sort((a, b) => a.sort_order - b.sort_order);
+
+    if (parsedFromSettings.length > 0) {
+      return parsedFromSettings;
+    }
+
+    if (error) {
+      console.warn('FAQ fetch failed; using fallback FAQs.');
+    }
+    return DEFAULT_FAQS;
   } catch (error) {
     console.warn('FAQ fetch timeout/error; using fallback FAQs.');
     return DEFAULT_FAQS;
@@ -492,6 +538,8 @@ export async function saveSiteSettings(formData: FormData): Promise<void> {
       },
     });
 
+    const parsedFaqs = parseFaqPayload(faqs_payload);
+
     const payload = [
       { key: 'hero_headline_bm', value: { text: hero_headline_bm } },
       { key: 'hero_headline_en', value: { text: hero_headline_en } },
@@ -534,23 +582,8 @@ export async function saveSiteSettings(formData: FormData): Promise<void> {
       { key: 'popup_button_text_bm', value: { text: popup_button_text_bm } },
       { key: 'popup_button_text_en', value: { text: popup_button_text_en } },
       { key: 'popup_redirect_url', value: { text: popup_redirect_url } },
+      { key: 'faqs_payload', value: { items: parsedFaqs } },
     ];
-
-    const parsedFaqs = faqs_payload
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .map((line, index) => {
-        const [question_bm, answer_bm, question_en, answer_en] = line.split('||').map((part) => part?.trim() || '');
-        return {
-          question_bm,
-          answer_bm,
-          question_en,
-          answer_en,
-          sort_order: index + 1,
-        };
-      })
-      .filter((item) => item.question_bm && item.answer_bm && item.question_en && item.answer_en);
 
     const upsertTimeout = timeoutController(4000);
     const { error } = await (supabase as any)
