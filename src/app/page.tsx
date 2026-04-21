@@ -87,7 +87,7 @@ export default function Home() {
   const heroSubheadlineFinal =
     lang === 'bm'
       ? 'EZMeta pantau campaigns anda 24/7, detect masalah sebelum berlaku, dan hantar laporan AI terus ke Telegram anda.'
-      : heroSubheadline;
+      : 'EZMeta monitors your campaigns 24/7, detects issues before they escalate, and delivers AI reports directly to your Telegram.';
 
   const { plans, allFeatures } = useMemo(() => buildPricingModel(settings, lang), [settings, lang]);
   const tickerItems = useMemo(() => {
@@ -360,7 +360,11 @@ export default function Home() {
                   Meta Ads Anda.
                 </>
               ) : (
-                heroHeadline
+                <>
+                  Stop Wasting Ad Spend. Let AI{' '}
+                  <em className="font-display text-emerald-300 not-italic italic">Optimize</em>{' '}
+                  Your Meta Ads.
+                </>
               )}
             </h1>
             <p className="mt-6 max-w-2xl text-base text-slate-300 md:text-lg">{heroSubheadlineFinal}</p>
