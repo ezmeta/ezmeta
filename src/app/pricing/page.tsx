@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, X } from 'lucide-react';
+import { Check, Crown, Radar, ShieldCheck, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createCheckoutSession } from '@/lib/stripe';
 import { SUBSCRIPTION_PRICES, CREDITS_PER_PLAN } from '@/lib/stripe';
@@ -33,7 +33,10 @@ export default function PricingPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [settingsRes, faqsRes] = await Promise.all([fetch('/api/site-settings', { cache: 'no-store' }), fetch('/api/faqs', { cache: 'no-store' })]);
+        const [settingsRes, faqsRes] = await Promise.all([
+          fetch('/api/site-settings', { cache: 'no-store' }),
+          fetch('/api/faqs', { cache: 'no-store' }),
+        ]);
 
         if (settingsRes.ok) {
           const data = (await settingsRes.json()) as PricingSettings;
@@ -53,6 +56,33 @@ export default function PricingPage() {
   }, []);
 
   const { plans, allFeatures } = useMemo(() => buildPricingModel(settings, lang), [settings, lang]);
+
+  const pageSubtitle =
+    lang === 'bm'
+      ? 'Pelan dipacu data sebenar, dengan warisan ciri automatik dari Starter → Pro → Agency.'
+      : 'Plans are driven by live settings, with automatic feature inheritance from Starter → Pro → Agency.';
+
+  const faqsToRender =
+    faqs.length > 0
+      ? faqs
+      : [
+          {
+            id: 'fallback-1',
+            question_bm: t.faq1q,
+            answer_bm: t.faq1a,
+            question_en: t.faq1q,
+            answer_en: t.faq1a,
+            sort_order: 1,
+          },
+          {
+            id: 'fallback-2',
+            question_bm: t.faq2q,
+            answer_bm: t.faq2a,
+            question_en: t.faq2q,
+            answer_en: t.faq2a,
+            sort_order: 2,
+          },
+        ];
 
   async function handleSubscribe(plan: 'starter' | 'pro' | 'agency') {
     if (plan === 'agency') {
@@ -101,18 +131,50 @@ export default function PricingPage() {
   }
 
   return (
-    <main className="min-h-[calc(100vh-128px)] bg-transparent text-slate-100">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.14),_transparent_42%)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.08)_1px,transparent_1px)] bg-[size:42px_42px] opacity-15" />
+    <main className="cyber-grid relative min-h-[calc(100vh-128px)] overflow-hidden text-slate-100">
+      <div className="pointer-events-none absolute -left-16 top-20 h-80 w-80 rounded-full bg-emerald-400/20 blur-[130px]" />
+      <div className="pointer-events-none absolute -right-20 top-36 h-80 w-80 rounded-full bg-sky-400/15 blur-[130px]" />
 
       <section className="relative px-4 pb-12 pt-20 md:pt-24">
         <div className="mx-auto max-w-5xl text-center">
-          <h1 className="text-3xl font-extrabold tracking-tight text-white md:text-5xl">{t.pricingTitle}</h1>
-          <p className="mx-auto mt-4 max-w-2xl text-slate-300">
-            {lang === 'bm'
-              ? 'Semua pakej diselaras secara automatik terus dari CMS Admin anda.'
-              : 'All plans are synced automatically from your Admin CMS settings.'}
+          <p className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-4 py-1 text-xs tracking-[0.18em] text-emerald-200 uppercase">
+            <Radar className="h-3.5 w-3.5" />
+            Mission Pricing Matrix
           </p>
+          <h1 className="font-display mt-4 text-4xl tracking-tight text-white md:text-6xl">{t.pricingTitle}</h1>
+          <p className="mx-auto mt-4 max-w-3xl text-slate-300">{pageSubtitle}</p>
+          <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-emerald-300/35 bg-slate-900/65 px-4 py-2 text-xs text-emerald-100">
+            <ShieldCheck className="h-4 w-4" />
+            {lang === 'bm' ? 'Subscription selamat dengan Stripe + Supabase' : 'Secure subscription flow with Stripe + Supabase'}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 pb-6">
+        <div className="mx-auto grid max-w-6xl gap-4 md:grid-cols-3">
+          {[
+            {
+              title: lang === 'bm' ? 'Sinkron Automatik' : 'Automatic Sync',
+              desc: lang === 'bm' ? 'Harga dan benefit terus tarik dari CMS.' : 'Pricing and benefits are pulled directly from CMS.',
+              icon: Sparkles,
+            },
+            {
+              title: lang === 'bm' ? 'Warisan Ciri' : 'Feature Inheritance',
+              desc: lang === 'bm' ? 'Pelan lebih tinggi mewarisi ciri pelan bawah.' : 'Higher tiers inherit lower-tier features by default.',
+              icon: Crown,
+            },
+            {
+              title: lang === 'bm' ? 'Aktif Segera' : 'Instant Activation',
+              desc: lang === 'bm' ? 'Starter aktif terus, Pro ke checkout Stripe.' : 'Starter activates immediately, Pro goes to Stripe checkout.',
+              icon: Check,
+            },
+          ].map((item) => (
+            <div key={item.title} className="cyber-panel p-4 text-left">
+              <item.icon className="mb-2 h-4 w-4 text-emerald-300" />
+              <p className="text-sm font-semibold text-slate-100">{item.title}</p>
+              <p className="mt-1 text-xs text-slate-400">{item.desc}</p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -121,13 +183,13 @@ export default function PricingPage() {
           {plans.map((plan) => (
             <div
               key={plan.key}
-              className={`rounded-2xl border bg-white/5 p-6 backdrop-blur-xl transition ${plan.popular ? 'border-emerald-400 shadow-[0_0_45px_rgba(16,185,129,0.25)]' : 'border-slate-800 hover:border-emerald-500/50'}`}
+              className={`cyber-panel p-6 transition ${plan.popular ? 'cyber-glow border-emerald-300/55' : 'hover:border-emerald-300/40'}`}
             >
-              {plan.popular ? <div className="mb-3 inline-block rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-300">{t.mostPopular}</div> : null}
-              <h3 className="text-xl font-bold text-white">{plan.name}</h3>
+              {plan.popular ? <div className="mb-3 inline-block rounded-full bg-emerald-400 px-3 py-1 text-xs font-semibold text-slate-950">{t.mostPopular}</div> : null}
+              <h3 className="text-xl font-semibold text-white">{plan.name}</h3>
               <p className="mt-1 text-sm text-slate-400">{plan.key === 'starter' ? t.starterSubtitle : plan.key === 'pro' ? t.proSubtitle : t.agencySubtitle}</p>
               <div className="mt-4">
-                <span className="text-4xl font-extrabold text-white">RM{plan.price}</span>
+                <span className="text-4xl font-extrabold text-emerald-100">RM{plan.price}</span>
                 <span className="ml-1 text-sm text-slate-400">/month</span>
               </div>
 
@@ -136,7 +198,7 @@ export default function PricingPage() {
                   const included = plan.benefits.includes(feature);
                   return (
                     <li key={`${plan.key}-${feature}`} className={`flex items-start gap-2 text-sm ${included ? 'text-slate-200' : 'text-slate-500'}`}>
-                      {included ? <Check className="mt-0.5 h-4 w-4 text-emerald-400" /> : <X className="mt-0.5 h-4 w-4 text-slate-600" />}
+                      {included ? <Check className="mt-0.5 h-4 w-4 text-emerald-300" /> : <X className="mt-0.5 h-4 w-4 text-slate-600" />}
                       <span>{feature}</span>
                     </li>
                   );
@@ -144,7 +206,7 @@ export default function PricingPage() {
               </ul>
 
               <Button
-                className="mt-6 w-full bg-emerald-500 text-slate-950 hover:bg-emerald-400"
+                className="mt-6 w-full bg-emerald-400 text-slate-950 hover:bg-emerald-300"
                 onClick={() => void handleSubscribe(plan.key)}
                 disabled={loadingPlan !== null}
               >
@@ -165,10 +227,10 @@ export default function PricingPage() {
 
       <section className="px-4 py-14">
         <div className="mx-auto max-w-4xl">
-          <h2 className="mb-4 text-center text-2xl font-bold text-white">{t.faqTitle}</h2>
+          <h2 className="font-display mb-4 text-center text-3xl text-white">{t.faqTitle}</h2>
           <Accordion type="single" collapsible className="space-y-3">
-            {faqs.map((faq) => (
-              <AccordionItem key={faq.id} value={faq.id} className="rounded-lg border border-slate-800 bg-slate-900/60 px-4">
+            {faqsToRender.map((faq) => (
+              <AccordionItem key={faq.id} value={faq.id} className="cyber-panel px-4">
                 <AccordionTrigger className="text-left text-slate-100 hover:no-underline">
                   {lang === 'bm' ? faq.question_bm : faq.question_en}
                 </AccordionTrigger>
@@ -181,3 +243,4 @@ export default function PricingPage() {
     </main>
   );
 }
+
