@@ -98,3 +98,61 @@ Create the following directories:
 2. Test OpenRouter API integration
 3. Validate data flow between components
 4. Ensure responsive design works across devices
+
+## Admin Dashboard Reference Roadmap (Saved)
+
+This section is saved as next-phase reference for making product behavior configurable via admin without code edits.
+
+### A. Configuration Strategy
+
+1. Split admin into:
+   - **Content CMS** (landing/pricing/FAQ/popup copy)
+   - **System Ops** (integrations, limits, health status)
+2. Keep public UI config in [`site_settings`](src/db/schema.sql:125).
+3. Keep sensitive secrets in server environment (not public CMS).
+
+### B. Suggested Settings Namespaces
+
+- `landing.*` → hero/testimonials/CTA
+- `pricing.*` → plans, labels, benefits, limits
+- `limits.*` → credits, reset policy, user caps
+- `integrations.*` → feature flags + operational metadata
+
+### C. Admin Modules to Add
+
+1. **Integration Health Center**
+   - Meta API status
+   - Telegram bot status
+   - Stripe webhook status
+   - Supabase read/write latency indicators
+
+2. **Plan Governance Panel**
+   - credits per plan
+   - hard/soft stop rules
+   - monthly reset controls
+
+3. **Automation Controls**
+   - Smart Pilot guardrails
+   - Telegram schedule + severity routing
+   - stop-loss defaults
+
+4. **Config Audit & Rollback**
+   - who changed what
+   - timestamped revisions
+   - one-click rollback
+
+### D. Reliability Hardening (Netlify/Prod)
+
+1. Increase production-friendly timeout in [`SUPABASE_QUERY_TIMEOUT_MS`](src/app/actions/admin-settings.ts:231).
+2. Add admin-visible source/debug indicators:
+   - live DB vs fallback
+   - last successful sync timestamp
+3. Ensure production migrations/seeds for [`faqs`](src/db/schema.sql:141) and [`site_settings`](src/db/schema.sql:125) are applied.
+
+### E. Practical Build Order
+
+1. Schema + settings contract freeze
+2. Admin ops UI shell
+3. Limits/credits enforcement
+4. Integration health checks
+5. Audit logging + rollback
