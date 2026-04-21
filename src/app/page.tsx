@@ -86,7 +86,18 @@ export default function Home() {
       : heroSubheadline;
 
   const { plans, allFeatures } = useMemo(() => buildPricingModel(settings, lang), [settings, lang]);
-  const tickerItems = Array.from({ length: 8 }, () => 'AI TELEGRAM ALERTS');
+  const tickerItems = [
+    'AI TELEGRAM ALERTS',
+    'WINNING AD DETECTOR',
+    'CREATIVE FATIGUE MONITOR',
+    'BUDGET TRACKER',
+  ];
+
+  const planOffers: Record<'starter' | 'pro' | 'agency', { value: string; bonus: string }> = {
+    starter: { value: '1 Ad Account', bonus: 'Bonus: +1 Akaun' },
+    pro: { value: '3 Ad Accounts', bonus: 'Bonus: +2 Akaun' },
+    agency: { value: '7 Ad Accounts', bonus: 'Bonus: +3 Akaun' },
+  };
 
   const heroMetrics = lang === 'bm'
     ? [
@@ -230,7 +241,7 @@ export default function Home() {
         </motion.div>
       </section>
 
-      <section id="features" className="relative border-t border-[#121212] bg-slate-950/35 px-4 py-24 md:py-28">
+      <section id="features" className="relative border-t border-[#121212] bg-slate-950/35 px-4 py-24 md:py-32">
         <div className="mx-auto max-w-6xl">
           <h2 className="font-display mb-8 text-center text-4xl text-slate-100 md:text-5xl">{t.featuresTitle}</h2>
           <div className="grid gap-6 md:grid-cols-3">
@@ -252,12 +263,16 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-y border-[#121212] bg-slate-950/60 px-4 py-14 md:py-20">
+      <section className="border-y border-[#121212] bg-[#0A0A0A] px-4 py-24 md:py-32">
+        <div className="mx-auto max-w-6xl">
+          <p className="mb-3 text-xs tracking-[0.22em] text-[#00FF94] uppercase">TESTIMONI</p>
+          <h2 className="font-display mb-10 text-4xl text-white md:text-5xl">Apa kata pengguna beta.</h2>
+        </div>
         <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
           {testimonials.map((item) => (
-            <div key={item.name} className="cyber-panel p-6">
+            <div key={item.name} className="rounded-2xl border border-[#121212] bg-slate-900/45 p-6 backdrop-blur-xl">
               <Activity className="h-4 w-4 text-emerald-300" />
-              <div className="mt-3 text-amber-300">★★★★★</div>
+              <div className="mt-3 text-yellow-300">★★★★★</div>
               <p className="mt-3 text-lg leading-8 text-slate-200">“{item.quote}”</p>
               <p className="mt-5 text-base font-semibold tracking-[0.02em] text-slate-100">{item.name}</p>
             </div>
@@ -265,10 +280,10 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="relative border-b border-[#121212] bg-slate-950/30 px-4 py-24 md:py-28">
+      <section className="relative border-b border-[#121212] bg-slate-950/30 px-4 py-24 md:py-32">
         <div className="mx-auto max-w-6xl">
           <div className="mb-7 flex items-center justify-between gap-4">
-            <h2 className="font-display text-4xl text-white md:text-5xl">{t.pricingTitle}</h2>
+            <h2 className="font-display text-4xl text-white md:text-6xl">Pilih Pakej Anda Sekarang</h2>
             <Link href="/pricing" className="text-sm text-emerald-200 hover:text-emerald-100">
               View full comparison →
             </Link>
@@ -282,15 +297,17 @@ export default function Home() {
                 ) : null}
                 <h3 className="mt-4 text-xl font-semibold text-white">{plan.name}</h3>
                 <p className="mt-1 text-sm text-slate-400">{plan.key === 'starter' ? t.starterSubtitle : plan.key === 'pro' ? t.proSubtitle : t.agencySubtitle}</p>
+                <p className="mt-3 text-sm font-medium text-slate-100">{planOffers[plan.key].value}</p>
+                <p className="text-sm text-[#00FF94]">{planOffers[plan.key].bonus}</p>
                 <p className="mt-4 text-3xl font-bold text-emerald-200">
                   RM{plan.price}
                   <span className="ml-1 text-sm font-normal text-slate-400">/mo</span>
                 </p>
-                <ul className="mt-5 space-y-2 text-sm">
+                <ul className="mt-5 min-h-[300px] space-y-2 text-sm">
                   {allFeatures.map((feature) => {
                     const included = plan.benefits.includes(feature);
                     return (
-                      <li key={`${plan.key}-${feature}`} className={`flex items-center gap-2 ${included ? 'text-slate-100' : 'text-slate-500/40'}`}>
+                      <li key={`${plan.key}-${feature}`} className={`flex items-center gap-2 ${included ? 'text-slate-100' : 'text-slate-400 opacity-20'}`}>
                         {included ? <Check className="h-4 w-4 text-emerald-300" /> : <X className="h-4 w-4 text-rose-300/50" />}
                         <span>{feature}</span>
                       </li>
@@ -318,7 +335,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-t border-[#121212] bg-slate-950/55 px-4 pb-24 pt-16 md:pt-24">
+      <section className="border-t border-[#121212] bg-slate-950/55 px-4 pb-24 pt-20 md:pb-32 md:pt-24">
         <div className="mx-auto max-w-4xl">
           <h3 className="font-display mb-7 text-4xl text-white md:text-5xl">{t.faqTitle}</h3>
           <Accordion type="single" collapsible>
