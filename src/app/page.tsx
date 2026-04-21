@@ -86,9 +86,7 @@ export default function Home() {
       : heroSubheadline;
 
   const { plans, allFeatures } = useMemo(() => buildPricingModel(settings, lang), [settings, lang]);
-  const tickerItems = lang === 'bm'
-    ? ['AI Optimization Engine', 'Telegram Signal Alerts', 'ROAS Drift Detection', 'Creative Fatigue Monitor', 'Multi-Account Control']
-    : ['AI Optimization Engine', 'Telegram Signal Alerts', 'ROAS Drift Detection', 'Creative Fatigue Monitor', 'Multi-Account Control'];
+  const tickerItems = Array.from({ length: 8 }, () => 'AI TELEGRAM ALERTS');
 
   const heroMetrics = lang === 'bm'
     ? [
@@ -217,7 +215,7 @@ export default function Home() {
         </motion.div>
       </section>
 
-      <section className="relative overflow-hidden border-y border-emerald-400/15 bg-slate-950/55 py-3">
+      <section className="relative overflow-hidden border-y border-[#121212] bg-slate-950/65 py-3">
         <motion.div
           animate={{ x: ['0%', '-50%'] }}
           transition={{ duration: 26, ease: 'linear', repeat: Infinity }}
@@ -232,9 +230,9 @@ export default function Home() {
         </motion.div>
       </section>
 
-      <section id="features" className="relative px-4 py-24 md:py-28">
+      <section id="features" className="relative border-t border-[#121212] bg-slate-950/35 px-4 py-24 md:py-28">
         <div className="mx-auto max-w-6xl">
-          <h2 className="font-display mb-8 text-center text-3xl text-slate-100 md:text-4xl">{t.featuresTitle}</h2>
+          <h2 className="font-display mb-8 text-center text-4xl text-slate-100 md:text-5xl">{t.featuresTitle}</h2>
           <div className="grid gap-6 md:grid-cols-3">
             {[
               { Icon: BarChart3, badge: 'Realtime Ops', title: t.featureCards[0].title, desc: t.featureCards[0].desc },
@@ -254,22 +252,23 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-4 py-14 md:py-20">
+      <section className="border-y border-[#121212] bg-slate-950/60 px-4 py-14 md:py-20">
         <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
           {testimonials.map((item) => (
-            <div key={item.name} className="cyber-panel p-5">
+            <div key={item.name} className="cyber-panel p-6">
               <Activity className="h-4 w-4 text-emerald-300" />
-              <p className="mt-3 text-sm leading-relaxed text-slate-200">“{item.quote}”</p>
-              <p className="mt-4 text-xs tracking-[0.12em] text-slate-400 uppercase">{item.name}</p>
+              <div className="mt-3 text-amber-300">★★★★★</div>
+              <p className="mt-3 text-lg leading-8 text-slate-200">“{item.quote}”</p>
+              <p className="mt-5 text-base font-semibold tracking-[0.02em] text-slate-100">{item.name}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="relative px-4 py-24 md:py-28">
+      <section className="relative border-b border-[#121212] bg-slate-950/30 px-4 py-24 md:py-28">
         <div className="mx-auto max-w-6xl">
           <div className="mb-7 flex items-center justify-between gap-4">
-            <h2 className="font-display text-3xl text-white md:text-4xl">{t.pricingTitle}</h2>
+            <h2 className="font-display text-4xl text-white md:text-5xl">{t.pricingTitle}</h2>
             <Link href="/pricing" className="text-sm text-emerald-200 hover:text-emerald-100">
               View full comparison →
             </Link>
@@ -288,11 +287,11 @@ export default function Home() {
                   <span className="ml-1 text-sm font-normal text-slate-400">/mo</span>
                 </p>
                 <ul className="mt-5 space-y-2 text-sm">
-                  {allFeatures.slice(0, 6).map((feature) => {
+                  {allFeatures.map((feature) => {
                     const included = plan.benefits.includes(feature);
                     return (
-                      <li key={`${plan.key}-${feature}`} className={`flex items-center gap-2 ${included ? 'text-slate-200' : 'text-slate-500'}`}>
-                        {included ? <Check className="h-4 w-4 text-emerald-300" /> : <X className="h-4 w-4 text-slate-600" />}
+                      <li key={`${plan.key}-${feature}`} className={`flex items-center gap-2 ${included ? 'text-slate-100' : 'text-slate-500/40'}`}>
+                        {included ? <Check className="h-4 w-4 text-emerald-300" /> : <X className="h-4 w-4 text-rose-300/50" />}
                         <span>{feature}</span>
                       </li>
                     );
@@ -319,16 +318,16 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-4 pb-24 pt-14 md:pt-20">
+      <section className="border-t border-[#121212] bg-slate-950/55 px-4 pb-24 pt-16 md:pt-24">
         <div className="mx-auto max-w-4xl">
-          <h3 className="font-display mb-5 text-3xl text-white">{t.faqTitle}</h3>
-          <Accordion type="single" collapsible className="space-y-3">
+          <h3 className="font-display mb-7 text-4xl text-white md:text-5xl">{t.faqTitle}</h3>
+          <Accordion type="single" collapsible>
             {displayFaqs.map((faq) => (
-              <AccordionItem key={faq.id} value={faq.id} className="cyber-panel px-4">
-                <AccordionTrigger className="text-left text-slate-100 hover:no-underline">
+              <AccordionItem key={faq.id} value={faq.id} className="border-b border-[#1a1a1a] px-0">
+                <AccordionTrigger className="text-left text-xl text-slate-100 hover:no-underline">
                   {lang === 'bm' ? faq.question_bm : faq.question_en}
                 </AccordionTrigger>
-                <AccordionContent className="text-slate-300">{lang === 'bm' ? faq.answer_bm : faq.answer_en}</AccordionContent>
+                <AccordionContent className="pb-5 text-base text-slate-300">{lang === 'bm' ? faq.answer_bm : faq.answer_en}</AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>

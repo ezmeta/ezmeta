@@ -194,15 +194,16 @@ export default function PricingPage() {
                 <span className="ml-1 text-sm text-slate-400">/month</span>
               </div>
 
-              <ul className="mt-6 space-y-2">
-                {uniqueFeatures
-                  .filter((feature) => plan.benefits.includes(feature))
-                  .map((feature) => (
-                    <li key={`${plan.key}-${feature}`} className="flex items-start gap-2 text-sm text-slate-200">
-                      <Check className="mt-0.5 h-4 w-4 text-emerald-300" />
+              <ul className="mt-6 min-h-[260px] space-y-2">
+                {uniqueFeatures.map((feature) => {
+                  const included = plan.benefits.includes(feature);
+                  return (
+                    <li key={`${plan.key}-${feature}`} className={`flex items-start gap-2 text-sm ${included ? 'text-slate-100' : 'text-slate-500/40'}`}>
+                      {included ? <Check className="mt-0.5 h-4 w-4 text-emerald-300" /> : <span className="mt-0.5 h-4 w-4 text-center text-rose-300/55">✕</span>}
                       <span>{feature}</span>
                     </li>
-                  ))}
+                  );
+                })}
               </ul>
 
               <Button
