@@ -98,6 +98,10 @@ export default function Home() {
   const heroSubheadline = lang === 'bm' ? settings.hero_subheadline_bm : settings.hero_subheadline_en;
   const alertBanner = lang === 'bm' ? settings.alert_banner_text_bm : settings.alert_banner_text_en;
   const whatsappHref = `https://wa.me/${settings.contact_whatsapp.replace(/[^\d]/g, '')}`;
+  const heroSubheadlineFinal =
+    lang === 'bm'
+      ? 'EZMeta pantau campaigns anda 24/7, detect masalah sebelum berlaku, dan hantar laporan AI terus ke Telegram anda.'
+      : heroSubheadline;
 
   const { plans, allFeatures } = useMemo(() => buildPricingModel(settings, lang), [settings, lang]);
   const tickerItems = lang === 'bm'
@@ -164,8 +168,18 @@ export default function Home() {
           className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1.1fr_0.9fr]"
         >
           <div className="cyber-panel p-8 md:p-10">
-            <h1 className="font-display cyber-headline text-4xl leading-tight md:text-6xl">{heroHeadline}</h1>
-            <p className="mt-6 max-w-2xl text-base text-slate-300 md:text-lg">{heroSubheadline}</p>
+            <h1 className="font-display text-4xl leading-tight text-slate-100 md:text-6xl">
+              {lang === 'bm' ? (
+                <>
+                  Hentikan Pembaziran Bajet Iklan. Biar AI{' '}
+                  <em className="font-display text-emerald-300 not-italic italic">Optimumkan</em>{' '}
+                  Meta Ads Anda.
+                </>
+              ) : (
+                heroHeadline
+              )}
+            </h1>
+            <p className="mt-6 max-w-2xl text-base text-slate-300 md:text-lg">{heroSubheadlineFinal}</p>
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <Link href="/signup">
