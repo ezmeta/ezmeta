@@ -10,18 +10,31 @@ import { stripeConfig } from '@/config/env';
 import { supabase } from '@/db/client';
 import { Profile } from '@/db/types';
 
-// Initialize Stripe client safely (server-only)
-const stripe =
-  typeof window === 'undefined' && stripeConfig.secretKey
-    ? new Stripe(stripeConfig.secretKey, {
-        apiVersion: '2026-03-25.dahlia',
-      })
-    : null;
+// Lazily initialize Stripe client only when needed
+let stripe: Stripe | null = null;
+
+function getStripeSecretKey(): string {
+  // Avoid throwing during module evaluation/prerender when key is not provided
+  const raw = process.env.STRIPE_SECRET_KEY;
+  return typeof raw === 'string' ? raw : '';
+}
 
 function requireStripe(): Stripe {
-  if (!stripe) {
+  if (stripe) return stripe;
+
+  if (typeof window !== 'undefined') {
+    throw new Error('Stripe can only be used on the server.');
+  }
+
+  const secretKey = getStripeSecretKey();
+  if (!secretKey) {
     throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY on the server.');
   }
+
+  stripe = new Stripe(secretKey, {
+    apiVersion: '2026-03-25.dahlia',
+  });
+
   return stripe;
 }
 
