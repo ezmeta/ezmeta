@@ -120,6 +120,142 @@ export default function Home() {
         { label: 'Critical alert delivery', value: '< 60s' },
       ];
 
+  const telegramCopy =
+    lang === 'bm'
+      ? {
+          badge: 'Telegram Preview',
+          reportTitle: '📊 LAPORAN HARIAN EZMeta',
+          summary: '📈 Ringkasan',
+          winnerHint: '💡 Scale budget +20% segera',
+          fatigueTitle: '😴 Creative Fatigue',
+          fatigueFlag: '🔴 Hijab Premium [KRITIKAL]',
+          fatigueDesc: 'CTR turun 40% dalam 7 hari',
+          budgetTitle: '💰 Budget Alert',
+          budgetFlag: '🟡 Retargeting Cart: 97.2% used',
+          budgetDesc: 'Hanya RM 25 berbaki',
+        }
+      : {
+          badge: 'Telegram Preview',
+          reportTitle: '📊 EZMeta DAILY REPORT',
+          summary: '📈 Summary',
+          winnerHint: '💡 Scale budget +20% now',
+          fatigueTitle: '😴 Creative Fatigue',
+          fatigueFlag: '🔴 Premium Hijab [CRITICAL]',
+          fatigueDesc: 'CTR dropped 40% in 7 days',
+          budgetTitle: '💰 Budget Alert',
+          budgetFlag: '🟡 Retargeting Cart: 97.2% used',
+          budgetDesc: 'Only RM 25 remaining',
+        };
+
+  const featureSectionCopy =
+    lang === 'bm'
+      ? {
+          heading: 'AI yang faham Meta Ads lebih baik dari manusia.',
+          subheading: 'Features AI yang direka khas untuk advertiser Malaysia.',
+          cards: [
+            {
+              Icon: Trophy,
+              title: 'Winning Ad Detector',
+              desc: 'AI scan semua campaigns dan detect ads yang perform terbaik. Score 0–100. Alert terus bila ada winning ad.',
+              glow: 'from-amber-300/25 to-amber-500/5',
+              iconColor: 'text-amber-300',
+            },
+            {
+              Icon: Globe2,
+              title: 'Creative Fatigue Detector',
+              desc: 'Detect CTR drop, frequency tinggi, dan CPM naik — tanda creative dah mati. Alert awal sebelum performance jatuh teruk.',
+              glow: 'from-violet-300/25 to-violet-500/5',
+              iconColor: 'text-violet-300',
+            },
+            {
+              Icon: HandCoins,
+              title: 'Budget Tracker',
+              desc: 'Monitor budget bulanan semua campaigns. Alert bila dah guna 80% serta pacing cadangan untuk baki hari.',
+              glow: 'from-emerald-300/25 to-emerald-500/5',
+              iconColor: 'text-emerald-300',
+            },
+            {
+              Icon: Heart,
+              title: 'Campaign Health Score',
+              desc: 'Setiap campaign dapat gred A–D berdasarkan ROAS, CTR, CPC, frequency dan conversions.',
+              glow: 'from-rose-300/25 to-rose-500/5',
+              iconColor: 'text-rose-300',
+            },
+            {
+              Icon: BarChart3,
+              title: 'Laporan AI dalam BM',
+              desc: 'Laporan harian dalam Bahasa Malaysia, mudah faham dan actionable terus ke Telegram.',
+              glow: 'from-sky-300/25 to-sky-500/5',
+              iconColor: 'text-sky-300',
+            },
+            {
+              Icon: Bot,
+              title: 'AI Recommendations',
+              desc: 'AI bagi cadangan automasi yang jelas untuk setiap campaign.',
+              glow: 'from-fuchsia-300/25 to-fuchsia-500/5',
+              iconColor: 'text-fuchsia-300',
+            },
+          ],
+        }
+      : {
+          heading: 'AI that understands Meta Ads better than manual workflows.',
+          subheading: 'AI features built specifically for performance marketers.',
+          cards: [
+            {
+              Icon: Trophy,
+              title: 'Winning Ad Detector',
+              desc: 'AI scans all campaigns and detects top-performing ads. Scored 0–100 with immediate alerts.',
+              glow: 'from-amber-300/25 to-amber-500/5',
+              iconColor: 'text-amber-300',
+            },
+            {
+              Icon: Globe2,
+              title: 'Creative Fatigue Detector',
+              desc: 'Detects CTR drops, high frequency, and rising CPM before your performance declines badly.',
+              glow: 'from-violet-300/25 to-violet-500/5',
+              iconColor: 'text-violet-300',
+            },
+            {
+              Icon: HandCoins,
+              title: 'Budget Tracker',
+              desc: 'Monitors monthly campaign budgets, alerts at 80% spend, and suggests pacing for remaining days.',
+              glow: 'from-emerald-300/25 to-emerald-500/5',
+              iconColor: 'text-emerald-300',
+            },
+            {
+              Icon: Heart,
+              title: 'Campaign Health Score',
+              desc: 'Each campaign receives an A–D score based on ROAS, CTR, CPC, frequency, and conversions.',
+              glow: 'from-rose-300/25 to-rose-500/5',
+              iconColor: 'text-rose-300',
+            },
+            {
+              Icon: BarChart3,
+              title: 'AI Daily Report',
+              desc: 'Daily reports in clear language, easy to understand, and directly actionable in Telegram.',
+              glow: 'from-sky-300/25 to-sky-500/5',
+              iconColor: 'text-sky-300',
+            },
+            {
+              Icon: Bot,
+              title: 'AI Recommendations',
+              desc: 'AI provides direct optimization recommendations for each campaign.',
+              glow: 'from-fuchsia-300/25 to-fuchsia-500/5',
+              iconColor: 'text-fuchsia-300',
+            },
+          ],
+        };
+
+  const socialProofCopy =
+    lang === 'bm'
+      ? { badge: 'TESTIMONI', title: 'Apa kata pengguna beta.' }
+      : { badge: 'TESTIMONIALS', title: 'What beta users are saying.' };
+
+  const pricingSectionCopy =
+    lang === 'bm'
+      ? { title: 'Pilih Pakej Anda Sekarang', link: 'Lihat perbandingan penuh →' }
+      : { title: 'Choose Your Plan Now', link: 'View full comparison →' };
+
   const testimonials = lang === 'bm'
     ? [
         {
@@ -255,7 +391,7 @@ export default function Home() {
 
           <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/30 p-5 backdrop-blur-2xl shadow-[0_12px_50px_rgba(0,0,0,0.45)]">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-300/35 bg-emerald-500/10 px-2.5 py-1 text-[10px] tracking-[0.18em] text-emerald-200 uppercase">
-              Telegram Preview
+              {telegramCopy.badge}
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-[#17212b]/85 p-4 backdrop-blur-xl">
@@ -268,25 +404,25 @@ export default function Home() {
               </div>
 
               <div className="rounded-xl border border-white/5 bg-[#1e2c3a]/95 p-4 text-[13px] leading-7 text-slate-300">
-                <p className="font-semibold text-white">📊 LAPORAN HARIAN EZMeta</p>
+                <p className="font-semibold text-white">{telegramCopy.reportTitle}</p>
                 <p>🗓 14/03/2026 08:00</p>
                 <br />
-                <p className="font-semibold text-white">📈 Ringkasan</p>
+                <p className="font-semibold text-white">{telegramCopy.summary}</p>
                 <p>• Spend: <span className="font-semibold text-emerald-300">RM 329.20</span></p>
                 <p>• ROAS: <span className="font-semibold text-emerald-300">3.72×</span></p>
                 <p>• Conv: <span className="font-semibold text-white">136</span></p>
                 <br />
                 <p className="font-semibold text-white">🏆 Winning Ads</p>
                 <p>⭐⭐ Skincare Bundle — Score <span className="font-semibold text-emerald-300">100/100</span></p>
-                <p>💡 Scale budget +20% segera</p>
+                <p>{telegramCopy.winnerHint}</p>
                 <br />
-                <p className="font-semibold text-white">😴 Creative Fatigue</p>
-                <p className="font-medium text-rose-300">🔴 Hijab Premium [KRITIKAL]</p>
-                <p>CTR turun 40% dalam 7 hari</p>
+                <p className="font-semibold text-white">{telegramCopy.fatigueTitle}</p>
+                <p className="font-medium text-rose-300">{telegramCopy.fatigueFlag}</p>
+                <p>{telegramCopy.fatigueDesc}</p>
                 <br />
-                <p className="font-semibold text-white">💰 Budget Alert</p>
-                <p className="font-medium text-amber-300">🟡 Retargeting Cart: 97.2% used</p>
-                <p>Hanya RM 25 berbaki</p>
+                <p className="font-semibold text-white">{telegramCopy.budgetTitle}</p>
+                <p className="font-medium text-amber-300">{telegramCopy.budgetFlag}</p>
+                <p>{telegramCopy.budgetDesc}</p>
                 <p className="mt-2 text-right text-[10px] text-slate-500">08:00 ✓✓</p>
               </div>
             </div>
@@ -311,53 +447,10 @@ export default function Home() {
 
       <section id="features" className="relative border-t border-[#121212] bg-slate-950/35 px-4 py-24 md:py-32">
         <div className="mx-auto max-w-6xl">
-          <h2 className="font-display mb-3 text-center text-4xl text-slate-100 md:text-5xl">AI yang faham Meta Ads lebih baik dari manusia.</h2>
-          <p className="mb-10 text-center text-base text-slate-300 md:text-lg">Features AI yang direka khas untuk advertiser Malaysia.</p>
+          <h2 className="font-display mb-3 text-center text-4xl text-slate-100 md:text-5xl">{featureSectionCopy.heading}</h2>
+          <p className="mb-10 text-center text-base text-slate-300 md:text-lg">{featureSectionCopy.subheading}</p>
           <div className="grid gap-6 md:grid-cols-3">
-            {[
-              {
-                Icon: Trophy,
-                title: 'Winning Ad Detector',
-                desc: 'AI scan semua campaigns dan detect ads yang perform terbaik. Score 0–100. Alert terus bila ada winning ad.',
-                glow: 'from-amber-300/25 to-amber-500/5',
-                iconColor: 'text-amber-300',
-              },
-              {
-                Icon: Globe2,
-                title: 'Creative Fatigue Detector',
-                desc: 'Detect CTR drop, frequency tinggi, dan CPM naik — tanda creative dah mati. Alert awal sebelum performance jatuh teruk.',
-                glow: 'from-violet-300/25 to-violet-500/5',
-                iconColor: 'text-violet-300',
-              },
-              {
-                Icon: HandCoins,
-                title: 'Budget Tracker',
-                desc: 'Monitor budget bulanan semua campaigns. Alert bila dah guna 80% serta pacing cadangan untuk baki hari.',
-                glow: 'from-emerald-300/25 to-emerald-500/5',
-                iconColor: 'text-emerald-300',
-              },
-              {
-                Icon: Heart,
-                title: 'Campaign Health Score',
-                desc: 'Setiap campaign dapat gred A–D berdasarkan ROAS, CTR, CPC, frequency dan conversions.',
-                glow: 'from-rose-300/25 to-rose-500/5',
-                iconColor: 'text-rose-300',
-              },
-              {
-                Icon: BarChart3,
-                title: 'Laporan AI dalam BM',
-                desc: 'Laporan harian dalam Bahasa Malaysia, mudah faham dan actionable terus ke Telegram.',
-                glow: 'from-sky-300/25 to-sky-500/5',
-                iconColor: 'text-sky-300',
-              },
-              {
-                Icon: Bot,
-                title: 'AI Recommendations',
-                desc: 'AI bagi cadangan automasi yang jelas untuk setiap campaign.',
-                glow: 'from-fuchsia-300/25 to-fuchsia-500/5',
-                iconColor: 'text-fuchsia-300',
-              },
-            ].map((item) => (
+            {featureSectionCopy.cards.map((item) => (
               <motion.div key={item.title} whileHover={{ y: -6 }} className="cyber-panel p-6 transition hover:border-emerald-300/50">
                 <div className={`mb-4 inline-flex rounded-xl border border-white/10 bg-gradient-to-br ${item.glow} p-3`}>
                   <item.Icon className={`h-5 w-5 ${item.iconColor}`} />
@@ -372,8 +465,8 @@ export default function Home() {
 
       <section className="border-y border-[#121212] bg-[#0A0A0A] px-4 py-24 md:py-32">
         <div className="mx-auto max-w-6xl">
-          <p className="mb-3 text-xs tracking-[0.22em] text-[#00FF94] uppercase">TESTIMONI</p>
-          <h2 className="font-display mb-10 text-4xl text-white md:text-5xl">Apa kata pengguna beta.</h2>
+          <p className="mb-3 text-xs tracking-[0.22em] text-[#00FF94] uppercase">{socialProofCopy.badge}</p>
+          <h2 className="font-display mb-10 text-4xl text-white md:text-5xl">{socialProofCopy.title}</h2>
         </div>
         <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
           {testimonials.map((item) => (
@@ -398,9 +491,9 @@ export default function Home() {
       <section className="relative border-b border-[#121212] bg-slate-950/30 px-4 py-24 md:py-32">
         <div className="mx-auto max-w-6xl">
           <div className="mb-7 flex items-center justify-between gap-4">
-            <h2 className="font-display text-4xl text-white md:text-6xl">Pilih Pakej Anda Sekarang</h2>
+            <h2 className="font-display text-4xl text-white md:text-6xl">{pricingSectionCopy.title}</h2>
             <Link href="/pricing" className="text-sm text-emerald-200 hover:text-emerald-100">
-              View full comparison →
+              {pricingSectionCopy.link}
             </Link>
           </div>
 
