@@ -1,123 +1,64 @@
 export default function PrivacyPolicyPage() {
   return (
-    <div className="container max-w-4xl py-12 px-4">
-      <h1 className="text-3xl font-bold mb-8">Privacy Policy</h1>
-      
-      <div className="prose prose-slate max-w-none">
-        <p className="text-lg mb-6">
-          Last Updated: April 20, 2026
-        </p>
-        
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
-          <p>
-            Welcome to EZ Meta ("we," "our," or "us"). We respect your privacy and are committed to protecting your personal data. 
-            This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our service.
-          </p>
-        </section>
-        
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">2. Information We Collect</h2>
-          <p className="mb-4">We collect several types of information from and about users of our platform, including:</p>
-          <ul className="list-disc pl-6 mb-4">
-            <li className="mb-2">
-              <strong>Personal Information:</strong> Name, email address, and billing information when you register for an account.
-            </li>
-            <li className="mb-2">
-              <strong>Meta Ad Account Data:</strong> When you connect your Meta Ad accounts, we access performance data through the Meta Graph API.
-            </li>
-            <li className="mb-2">
-              <strong>Usage Data:</strong> Information about how you use our platform, including AI content generations, feature usage, and interaction patterns.
-            </li>
-            <li className="mb-2">
-              <strong>Technical Data:</strong> IP address, browser type and version, time zone setting, browser plug-in types and versions, operating system, and platform.
-            </li>
-          </ul>
-        </section>
-        
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">3. How We Use Your Information</h2>
-          <p className="mb-4">We use the information we collect to:</p>
-          <ul className="list-disc pl-6 mb-4">
-            <li className="mb-2">Provide, maintain, and improve our services</li>
-            <li className="mb-2">Process your transactions and manage your account</li>
-            <li className="mb-2">Connect to Meta's API on your behalf to retrieve and analyze ad performance</li>
-            <li className="mb-2">Generate AI-powered content based on your inputs and preferences</li>
-            <li className="mb-2">Send you technical notices, updates, security alerts, and support messages</li>
-            <li className="mb-2">Respond to your comments, questions, and customer service requests</li>
-            <li className="mb-2">Monitor and analyze trends, usage, and activities in connection with our service</li>
-          </ul>
-        </section>
-        
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">4. Data Sharing and Disclosure</h2>
-          <p className="mb-4">We may share your information with:</p>
-          <ul className="list-disc pl-6 mb-4">
-            <li className="mb-2">
-              <strong>Service Providers:</strong> Companies that perform services on our behalf, including payment processing, data analysis, email delivery, hosting services, and customer service.
-            </li>
-            <li className="mb-2">
-              <strong>Meta:</strong> When you connect your Meta Ad accounts, we exchange data with Meta through their API.
-            </li>
-            <li className="mb-2">
-              <strong>Legal Requirements:</strong> We may disclose your information if required to do so by law or in response to valid requests by public authorities.
-            </li>
-            <li className="mb-2">
-              <strong>Business Transfers:</strong> In connection with any merger, sale of company assets, financing, or acquisition of all or a portion of our business.
-            </li>
-          </ul>
-        </section>
-        
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">5. Data Security</h2>
-          <p>
-            We implement appropriate security measures to protect your personal information. However, no method of transmission over the Internet or electronic storage is 100% secure, and we cannot guarantee absolute security.
-          </p>
-        </section>
-        
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">6. Your Data Rights</h2>
-          <p className="mb-4">Depending on your location, you may have certain rights regarding your personal data, including:</p>
-          <ul className="list-disc pl-6 mb-4">
-            <li className="mb-2">The right to access your personal data</li>
-            <li className="mb-2">The right to rectify inaccurate personal data</li>
-            <li className="mb-2">The right to request deletion of your personal data</li>
-            <li className="mb-2">The right to restrict or object to processing of your personal data</li>
-            <li className="mb-2">The right to data portability</li>
-          </ul>
-          <p>
-            To exercise these rights, please contact us at privacy@ezmeta.com.
-          </p>
-        </section>
-        
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">7. Cookies and Tracking Technologies</h2>
-          <p>
-            We use cookies and similar tracking technologies to track activity on our service and hold certain information. You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent.
-          </p>
-        </section>
-        
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">8. Children's Privacy</h2>
-          <p>
-            Our service is not intended for individuals under the age of 18. We do not knowingly collect personal information from children under 18.
-          </p>
-        </section>
-        
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">9. Changes to This Privacy Policy</h2>
-          <p>
-            We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date.
-          </p>
-        </section>
-        
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">10. Contact Us</h2>
-          <p>
-            If you have any questions about this Privacy Policy, please contact us at privacy@ezmeta.com.
-          </p>
-        </section>
+    <main className="cyber-grid relative min-h-[calc(100vh-128px)] overflow-hidden px-4 py-16 text-slate-100 md:py-24">
+      <div className="pointer-events-none absolute -left-24 top-20 h-72 w-72 rounded-full bg-emerald-400/20 blur-[120px]" />
+      <div className="pointer-events-none absolute -right-20 top-40 h-80 w-80 rounded-full bg-sky-400/15 blur-[130px]" />
+
+      <div className="relative mx-auto max-w-4xl">
+        <article className="cyber-panel p-8 md:p-10">
+          <h1 className="font-display text-4xl text-white md:text-5xl">Privacy Policy</h1>
+          <p className="mt-3 text-sm text-slate-400">Last Updated: April 20, 2026</p>
+
+          <div className="mt-8 space-y-8 text-sm leading-7 text-slate-300">
+            <section>
+              <h2 className="font-display text-2xl text-white">1. Introduction</h2>
+              <p className="mt-2">Welcome to EZ Meta ("we," "our," or "us"). We respect your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our service.</p>
+            </section>
+
+            <section>
+              <h2 className="font-display text-2xl text-white">2. Information We Collect</h2>
+              <ul className="mt-2 list-disc space-y-2 pl-6">
+                <li><strong>Personal Information:</strong> Name, email address, and billing information when you register for an account.</li>
+                <li><strong>Meta Ad Account Data:</strong> Performance data retrieved through the Meta Graph API after connection.</li>
+                <li><strong>Usage Data:</strong> Feature usage, AI generations, and interaction patterns.</li>
+                <li><strong>Technical Data:</strong> IP address, browser type, operating system, and platform diagnostics.</li>
+              </ul>
+            </section>
+
+            <section>
+              <h2 className="font-display text-2xl text-white">3. How We Use Your Information</h2>
+              <ul className="mt-2 list-disc space-y-2 pl-6">
+                <li>Provide, maintain, and improve our services</li>
+                <li>Process transactions and manage subscriptions</li>
+                <li>Retrieve and analyze ad performance data you authorize</li>
+                <li>Generate AI-powered outputs based on campaign context</li>
+                <li>Send service updates, notices, and security communication</li>
+              </ul>
+            </section>
+
+            <section>
+              <h2 className="font-display text-2xl text-white">4. Data Sharing and Disclosure</h2>
+              <p className="mt-2">We may share data with essential service providers, Meta (for connected API operations), legal authorities when required, and during lawful business transfers.</p>
+            </section>
+
+            <section>
+              <h2 className="font-display text-2xl text-white">5. Security</h2>
+              <p className="mt-2">We apply practical administrative and technical controls to protect your information. No internet transmission method is absolutely secure.</p>
+            </section>
+
+            <section>
+              <h2 className="font-display text-2xl text-white">6. Your Rights</h2>
+              <p className="mt-2">Depending on jurisdiction, you may request access, correction, deletion, restriction, objection, and data portability. Contact: privacy@ezmeta.com.</p>
+            </section>
+
+            <section>
+              <h2 className="font-display text-2xl text-white">7. Contact</h2>
+              <p className="mt-2">Questions regarding this policy can be sent to privacy@ezmeta.com.</p>
+            </section>
+          </div>
+        </article>
       </div>
-    </div>
+    </main>
   );
 }
+

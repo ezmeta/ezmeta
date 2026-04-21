@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Crown, Radar, ShieldCheck, Sparkles, X } from 'lucide-react';
+import { Check, Crown, Radar, ShieldCheck, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createCheckoutSession } from '@/lib/stripe';
 import { SUBSCRIPTION_PRICES, CREDITS_PER_PLAN } from '@/lib/stripe';
@@ -56,6 +56,7 @@ export default function PricingPage() {
   }, []);
 
   const { plans, allFeatures } = useMemo(() => buildPricingModel(settings, lang), [settings, lang]);
+  const uniqueFeatures = useMemo(() => Array.from(new Set(allFeatures)), [allFeatures]);
 
   const pageSubtitle =
     lang === 'bm'
@@ -135,7 +136,7 @@ export default function PricingPage() {
       <div className="pointer-events-none absolute -left-16 top-20 h-80 w-80 rounded-full bg-emerald-400/20 blur-[130px]" />
       <div className="pointer-events-none absolute -right-20 top-36 h-80 w-80 rounded-full bg-sky-400/15 blur-[130px]" />
 
-      <section className="relative px-4 pb-12 pt-20 md:pt-24">
+      <section className="relative px-4 pb-16 pt-24 md:pb-20 md:pt-28">
         <div className="mx-auto max-w-5xl text-center">
           <p className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-4 py-1 text-xs tracking-[0.18em] text-emerald-200 uppercase">
             <Radar className="h-3.5 w-3.5" />
@@ -150,7 +151,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <section className="px-4 pb-6">
+      <section className="px-4 pb-12 md:pb-16">
         <div className="mx-auto grid max-w-6xl gap-4 md:grid-cols-3">
           {[
             {
@@ -178,7 +179,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <section className="relative px-4 py-10">
+      <section className="relative px-4 py-16 md:py-20">
         <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
           {plans.map((plan) => (
             <div
@@ -194,15 +195,14 @@ export default function PricingPage() {
               </div>
 
               <ul className="mt-6 space-y-2">
-                {allFeatures.map((feature) => {
-                  const included = plan.benefits.includes(feature);
-                  return (
-                    <li key={`${plan.key}-${feature}`} className={`flex items-start gap-2 text-sm ${included ? 'text-slate-200' : 'text-slate-500'}`}>
-                      {included ? <Check className="mt-0.5 h-4 w-4 text-emerald-300" /> : <X className="mt-0.5 h-4 w-4 text-slate-600" />}
+                {uniqueFeatures
+                  .filter((feature) => plan.benefits.includes(feature))
+                  .map((feature) => (
+                    <li key={`${plan.key}-${feature}`} className="flex items-start gap-2 text-sm text-slate-200">
+                      <Check className="mt-0.5 h-4 w-4 text-emerald-300" />
                       <span>{feature}</span>
                     </li>
-                  );
-                })}
+                  ))}
               </ul>
 
               <Button
@@ -225,7 +225,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <section className="px-4 py-14">
+      <section className="px-4 py-20 md:py-24">
         <div className="mx-auto max-w-4xl">
           <h2 className="font-display mb-4 text-center text-3xl text-white">{t.faqTitle}</h2>
           <Accordion type="single" collapsible className="space-y-3">

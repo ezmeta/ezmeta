@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue, useSpring } from 'framer-motion';
 import {
   Activity,
   ArrowRight,
@@ -10,7 +10,6 @@ import {
   Check,
   LineChart,
   Radar,
-  ShieldCheck,
   Sparkles,
   X,
 } from 'lucide-react';
@@ -52,23 +51,24 @@ export default function Home() {
   const { lang } = useLanguage();
   const [settings, setSettings] = useState<LandingSettings>(FALLBACK_SETTINGS);
   const [faqs, setFaqs] = useState<FaqItem[]>([]);
-  const [cursor, setCursor] = useState({ x: -100, y: -100 });
+  const cursorX = useMotionValue(-100);
+  const cursorY = useMotionValue(-100);
+  const smoothX = useSpring(cursorX, { stiffness: 420, damping: 34, mass: 0.35 });
+  const smoothY = useSpring(cursorY, { stiffness: 420, damping: 34, mass: 0.35 });
+  const trailX = useSpring(cursorX, { stiffness: 180, damping: 28, mass: 0.8 });
+  const trailY = useSpring(cursorY, { stiffness: 180, damping: 28, mass: 0.8 });
 
   useEffect(() => {
-    let raf = 0;
     const onMove = (event: MouseEvent) => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        setCursor({ x: event.clientX, y: event.clientY });
-      });
+      cursorX.set(event.clientX);
+      cursorY.set(event.clientY);
     };
 
     window.addEventListener('mousemove', onMove);
     return () => {
       window.removeEventListener('mousemove', onMove);
-      cancelAnimationFrame(raf);
     };
-  }, []);
+  }, [cursorX, cursorY]);
 
   useEffect(() => {
     let active = true;
@@ -137,15 +137,15 @@ export default function Home() {
 
   return (
     <main className="cyber-grid relative min-h-[calc(100vh-128px)] overflow-hidden text-slate-100">
-      <div
+      <motion.div
         aria-hidden
-        className="pointer-events-none fixed z-[120] h-4 w-4 rounded-full border border-emerald-200/90 bg-emerald-300/20 shadow-[0_0_28px_rgba(0,229,160,0.7)] transition-transform duration-75"
-        style={{ transform: `translate3d(${cursor.x - 8}px, ${cursor.y - 8}px, 0)` }}
+        className="pointer-events-none fixed left-0 top-0 z-[120] h-4 w-4 rounded-full border border-emerald-200/90 bg-emerald-300/20 shadow-[0_0_28px_rgba(0,229,160,0.75)] mix-blend-difference"
+        style={{ x: smoothX, y: smoothY, translateX: '-50%', translateY: '-50%' }}
       />
-      <div
+      <motion.div
         aria-hidden
-        className="pointer-events-none fixed z-[119] h-14 w-14 rounded-full bg-emerald-400/15 blur-lg transition-transform duration-150"
-        style={{ transform: `translate3d(${cursor.x - 28}px, ${cursor.y - 28}px, 0)` }}
+        className="pointer-events-none fixed left-0 top-0 z-[119] h-16 w-16 rounded-full bg-emerald-300/20 blur-md mix-blend-exclusion"
+        style={{ x: trailX, y: trailY, translateX: '-50%', translateY: '-50%' }}
       />
 
       <div className="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-emerald-400/20 blur-[120px]" />
@@ -155,7 +155,7 @@ export default function Home() {
         {alertBanner}
       </div>
 
-      <section className="relative px-4 pb-16 pt-16 md:pt-24">
+      <section className="relative px-4 pb-20 pt-20 md:pb-24 md:pt-28">
         <motion.div
           key={lang}
           initial={{ opacity: 0, y: 16 }}
@@ -164,11 +164,7 @@ export default function Home() {
           className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1.1fr_0.9fr]"
         >
           <div className="cyber-panel p-8 md:p-10">
-            <p className="inline-flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-3 py-1 text-xs font-medium tracking-[0.18em] text-emerald-200 uppercase">
-              <ShieldCheck className="h-3.5 w-3.5" />
-              Cyber-Sophisticated AI Ops
-            </p>
-            <h1 className="font-display cyber-headline mt-5 text-4xl leading-tight md:text-6xl">{heroHeadline}</h1>
+            <h1 className="font-display cyber-headline text-4xl leading-tight md:text-6xl">{heroHeadline}</h1>
             <p className="mt-6 max-w-2xl text-base text-slate-300 md:text-lg">{heroSubheadline}</p>
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
@@ -251,7 +247,7 @@ export default function Home() {
         </motion.div>
       </section>
 
-      <section className="relative px-4 py-16">
+      <section id="features" className="relative px-4 py-24 md:py-28">
         <div className="mx-auto max-w-6xl">
           <h2 className="font-display mb-8 text-center text-3xl text-slate-100 md:text-4xl">{t.featuresTitle}</h2>
           <div className="grid gap-6 md:grid-cols-3">
@@ -273,7 +269,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-4 py-8">
+      <section className="px-4 py-14 md:py-20">
         <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
           {testimonials.map((item) => (
             <div key={item.name} className="cyber-panel p-5">
@@ -285,7 +281,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="relative px-4 py-16">
+      <section className="relative px-4 py-24 md:py-28">
         <div className="mx-auto max-w-6xl">
           <div className="mb-7 flex items-center justify-between gap-4">
             <h2 className="font-display text-3xl text-white md:text-4xl">{t.pricingTitle}</h2>
@@ -338,7 +334,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-4 pb-20 pt-8">
+      <section className="px-4 pb-24 pt-14 md:pt-20">
         <div className="mx-auto max-w-4xl">
           <h3 className="font-display mb-5 text-3xl text-white">{t.faqTitle}</h3>
           <Accordion type="single" collapsible className="space-y-3">

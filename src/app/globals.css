@@ -75,11 +75,22 @@
     background: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans), Inter, system-ui, sans-serif;
+    cursor: none;
     transition: background-color 150ms ease, color 150ms ease;
     background-image:
       radial-gradient(circle at 15% 0%, rgba(47, 242, 161, 0.1), transparent 28%),
       radial-gradient(circle at 85% 20%, rgba(88, 135, 255, 0.11), transparent 28%),
       linear-gradient(180deg, #03050b 0%, #070b14 48%, #05070e 100%);
+  }
+
+  a,
+  button,
+  input,
+  textarea,
+  select,
+  summary,
+  [role='button'] {
+    cursor: none;
   }
 
   * {
