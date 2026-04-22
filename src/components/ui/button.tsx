@@ -40,12 +40,39 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, onMouseMove, onMouseLeave, style, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
+
+    const handleMouseMove = (event: React.MouseEvent<HTMLButtonElement>) => {
+      const target = event.currentTarget;
+      const rect = target.getBoundingClientRect();
+      const x = event.clientX - rect.left - rect.width / 2;
+      const y = event.clientY - rect.top - rect.height / 2;
+      const maxOffset = 8;
+      const clampedX = Math.max(-maxOffset, Math.min(maxOffset, x * 0.18));
+      const clampedY = Math.max(-maxOffset, Math.min(maxOffset, y * 0.18));
+      target.style.setProperty("--magnetic-x", `${clampedX}px`);
+      target.style.setProperty("--magnetic-y", `${clampedY}px`);
+      onMouseMove?.(event);
+    };
+
+    const handleMouseLeave = (event: React.MouseEvent<HTMLButtonElement>) => {
+      const target = event.currentTarget;
+      target.style.setProperty("--magnetic-x", "0px");
+      target.style.setProperty("--magnetic-y", "0px");
+      onMouseLeave?.(event);
+    };
+
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(
+          buttonVariants({ variant, size, className }),
+          "transform-gpu [transform:translate3d(var(--magnetic-x,0px),var(--magnetic-y,0px),0)]"
+        )}
         ref={ref}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        style={style}
         {...props}
       />
     );

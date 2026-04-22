@@ -1,0 +1,18 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Malaysia flag">
+  <clipPath id="clipCircleMy"><circle cx="32" cy="32" r="32" /></clipPath>
+  <g clip-path="url(#clipCircleMy)">
+    <rect width="64" height="64" fill="#ffffff" />
+    <rect y="0" width="64" height="4.923" fill="#c8102e" />
+    <rect y="9.846" width="64" height="4.923" fill="#c8102e" />
+    <rect y="19.692" width="64" height="4.923" fill="#c8102e" />
+    <rect y="29.538" width="64" height="4.923" fill="#c8102e" />
+    <rect y="39.384" width="64" height="4.923" fill="#c8102e" />
+    <rect y="49.23" width="64" height="4.923" fill="#c8102e" />
+    <rect y="59.076" width="64" height="4.923" fill="#c8102e" />
+    <rect width="36" height="34" fill="#012169" />
+    <circle cx="14.5" cy="16.5" r="9" fill="#ffcd00" />
+    <circle cx="17.5" cy="16.5" r="7.2" fill="#012169" />
+    <path d="M26.5 8.8l1.2 3.3h3.5l-2.8 2.1 1.1 3.3-3-2-2.9 2 1-3.3-2.8-2.1h3.5z" fill="#ffcd00" />
+  </g>
+</svg>
+

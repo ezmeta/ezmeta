@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   Activity,
+  Aperture,
   ArrowRight,
   Brain,
   Bot,
@@ -13,6 +14,8 @@ import {
   Globe2,
   HandCoins,
   Heart,
+  Hexagon,
+  Orbit,
   Radar,
   Trophy,
   Waves,
@@ -21,6 +24,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import FeedbackWidget from '@/components/shared/FeedbackWidget';
+import { useLanguage } from '@/components/providers/language-provider';
 import { landingDictionary } from '@/lib/i18n/landing';
 import { buildPricingModel, EMPTY_PRICING_SETTINGS, type PricingSettings } from '@/lib/pricing-model';
 
@@ -51,7 +55,16 @@ type LandingSettings = PricingSettings & {
   pricing_section_link_en: string;
   alert_banner_text_bm: string;
   alert_banner_text_en: string;
-  usp_features_payload: Array<{ id: string; icon: string; title: string; description: string }>;
+  usp_features_payload: Array<{
+    id: string;
+    icon: string;
+    title: string;
+    description: string;
+    title_bm?: string;
+    title_en?: string;
+    description_bm?: string;
+    description_en?: string;
+  }>;
   testimonials_payload: Array<{ id: string; name: string; role: string; quote: string; avatar_url: string }>;
 };
 
@@ -179,8 +192,39 @@ const USP_CANONICAL_EN = [
   },
 ] as const;
 
-function parseHighlightText(text: string, highlightColor: string): ReactNode[] {
+function parseHighlightText(
+  text: string,
+  highlightColor: string,
+  options?: {
+    interactive?: boolean;
+    onMove?: (event: ReactMouseEvent<HTMLElement>) => void;
+    onLeave?: () => void;
+  }
+): ReactNode[] {
   const resolvedColor = 'var(--primary-color)';
+
+  const renderInteractiveWords = (value: string, keyPrefix: string, highlighted: boolean): ReactNode[] => {
+    return value.split(/(\s+)/).map((token, tokenIndex) => {
+      const tokenKey = `${keyPrefix}-w-${tokenIndex}`;
+      if (/^\s+$/.test(token)) {
+        return <span key={tokenKey}>{token}</span>;
+      }
+
+      return (
+        <motion.span
+          key={tokenKey}
+          whileHover={{ scale: 1.15, y: -5 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 22, mass: 0.4 }}
+          className={highlighted ? 'hero-highlight-word hero-tactile-word' : 'hero-inline-word hero-tactile-word'}
+          onMouseMove={options?.onMove}
+          onMouseLeave={options?.onLeave}
+        >
+          {token}
+        </motion.span>
+      );
+    });
+  };
+
   const renderInline = (input: string, keyPrefix: string): ReactNode[] => {
     return input
       .split(/(\*\*[^*]+\*\*|\*[^*]+\*|\[[^\]]+\])/g)
@@ -198,11 +242,22 @@ function parseHighlightText(text: string, highlightColor: string): ReactNode[] {
         if (part.startsWith('[') && part.endsWith(']') && part.length >= 3) {
           const value = part.slice(1, -1);
           return (
-            <span key={key} style={{ color: resolvedColor, fontWeight: 700 }}>
-              {renderInline(value, `${key}-h`)}
+            <span
+              key={key}
+              className={options?.interactive ? 'hero-highlight-word' : undefined}
+              onMouseMove={options?.interactive ? options.onMove : undefined}
+              onMouseLeave={options?.interactive ? options.onLeave : undefined}
+              style={{ color: resolvedColor, fontWeight: 700 }}
+            >
+              {options?.interactive ? renderInteractiveWords(value, `${key}-h`, true) : renderInline(value, `${key}-h`)}
             </span>
           );
         }
+
+        if (options?.interactive) {
+          return <span key={key}>{renderInteractiveWords(part, key, false)}</span>;
+        }
+
         return <span key={key}>{part}</span>;
       });
   };
@@ -224,7 +279,7 @@ function parseHighlightText(text: string, highlightColor: string): ReactNode[] {
 }
 
 export default function Home() {
-  const lang: 'en' = 'en';
+  const { lang } = useLanguage();
   const [settings, setSettings] = useState<LandingSettings>(FALLBACK_SETTINGS);
   const [faqs, setFaqs] = useState<FaqItem[]>([]);
   const [showPopup, setShowPopup] = useState(false);
@@ -252,21 +307,29 @@ export default function Home() {
     };
   }, []);
 
-  const t = landingDictionary.en;
-  const heroHeadline = settings.hero_headline_en || FALLBACK_SETTINGS.hero_headline_en;
-  const heroSubheadline = settings.hero_subheadline_en || FALLBACK_SETTINGS.hero_subheadline_en;
-  const alertBanner = settings.alert_banner_text_en || FALLBACK_SETTINGS.alert_banner_text_en;
+  const t = landingDictionary[lang];
+  const heroHeadline = lang === 'en'
+    ? settings.hero_headline_en || FALLBACK_SETTINGS.hero_headline_en
+    : settings.hero_headline_bm || FALLBACK_SETTINGS.hero_headline_bm;
+  const heroSubheadline = lang === 'en'
+    ? settings.hero_subheadline_en || FALLBACK_SETTINGS.hero_subheadline_en
+    : settings.hero_subheadline_bm || FALLBACK_SETTINGS.hero_subheadline_bm;
+  const alertBanner = lang === 'en'
+    ? settings.alert_banner_text_en || FALLBACK_SETTINGS.alert_banner_text_en
+    : settings.alert_banner_text_bm || FALLBACK_SETTINGS.alert_banner_text_bm;
   const whatsappHref = `https://wa.me/${settings.contact_whatsapp.replace(/[^\d]/g, '')}`;
   const highlightColor = settings.highlight_color || FALLBACK_SETTINGS.highlight_color;
 
-  const { plans, allFeatures } = useMemo(() => buildPricingModel(settings, 'en'), [settings]);
+  const { plans, allFeatures } = useMemo(() => buildPricingModel(settings, lang), [settings, lang]);
   const tickerItems = useMemo(() => {
-    const source = settings.ticker_items_en;
+    const source = lang === 'en' ? settings.ticker_items_en : settings.ticker_items_bm;
     const cleaned = source.map((item) => item.trim()).filter(Boolean);
     return cleaned.length > 0
       ? cleaned
-      : ['AI TELEGRAM ALERTS', 'WINNING AD DETECTOR', 'CREATIVE FATIGUE MONITOR', 'BUDGET TRACKER'];
-  }, [settings.ticker_items_en]);
+      : lang === 'en'
+        ? ['AI TELEGRAM ALERTS', 'WINNING AD DETECTOR', 'CREATIVE FATIGUE MONITOR', 'BUDGET TRACKER']
+        : ['ALERT TELEGRAM AI', 'PENGESAN IKLAN MENANG', 'PENGESAN CREATIVE FATIGUE', 'PENJEJAK BAJET'];
+  }, [lang, settings.ticker_items_bm, settings.ticker_items_en]);
   const orderedComparisonFeatures = useMemo(
     () =>
       allFeatures.filter((feature) => {
@@ -278,24 +341,43 @@ export default function Home() {
     [allFeatures]
   );
 
-  const heroMetrics = [
-    { label: 'Average ROAS uplift', value: '+31%' },
-    { label: 'Audit time saved', value: '-11 hrs/week' },
-    { label: 'Critical alert delivery', value: '< 60s' },
-  ];
+  const heroMetrics = lang === 'en'
+    ? [
+        { label: 'Average ROAS uplift', value: '+31%' },
+        { label: 'Audit time saved', value: '-11 hrs/week' },
+        { label: 'Critical alert delivery', value: '< 60s' },
+      ]
+    : [
+        { label: 'Purata peningkatan ROAS', value: '+31%' },
+        { label: 'Masa audit dijimatkan', value: '-11 jam/minggu' },
+        { label: 'Penghantaran alert kritikal', value: '< 60s' },
+      ];
 
-  const telegramCopy = {
-    badge: 'Telegram Preview',
-    reportTitle: '📊 EZMeta DAILY REPORT',
-    summary: '📈 Summary',
-    winnerHint: '💡 Scale budget +20% now',
-    fatigueTitle: '😴 Creative Fatigue',
-    fatigueFlag: '🔴 Premium Hijab [CRITICAL]',
-    fatigueDesc: 'CTR dropped 40% in 7 days',
-    budgetTitle: '💰 Budget Alert',
-    budgetFlag: '🟡 Retargeting Cart: 97.2% used',
-    budgetDesc: 'Only RM 25 remaining',
-  };
+  const telegramCopy = lang === 'en'
+    ? {
+        badge: 'Telegram Preview',
+        reportTitle: '📊 EZMeta DAILY REPORT',
+        summary: '📈 Summary',
+        winnerHint: '💡 Scale budget +20% now',
+        fatigueTitle: '😴 Creative Fatigue',
+        fatigueFlag: '🔴 Premium Hijab [CRITICAL]',
+        fatigueDesc: 'CTR dropped 40% in 7 days',
+        budgetTitle: '💰 Budget Alert',
+        budgetFlag: '🟡 Retargeting Cart: 97.2% used',
+        budgetDesc: 'Only RM 25 remaining',
+      }
+    : {
+        badge: 'Pratonton Telegram',
+        reportTitle: '📊 LAPORAN HARIAN EZMeta',
+        summary: '📈 Ringkasan',
+        winnerHint: '💡 Naikkan bajet +20% sekarang',
+        fatigueTitle: '😴 Creative Fatigue',
+        fatigueFlag: '🔴 Premium Hijab [KRITIKAL]',
+        fatigueDesc: 'CTR turun 40% dalam 7 hari',
+        budgetTitle: '💰 Alert Bajet',
+        budgetFlag: '🟡 Retargeting Cart: 97.2% digunakan',
+        budgetDesc: 'Baki hanya RM 25',
+      };
 
   const uspSource = settings.usp_features_payload?.length >= 6
     ? settings.usp_features_payload.slice(0, 6)
@@ -308,24 +390,45 @@ export default function Home() {
     const bmCanonical = USP_CANONICAL_BM[index];
     const enCanonical = USP_CANONICAL_EN[index];
 
+    const titleRaw = item.title?.trim() || '';
+    const descriptionRaw = item.description?.trim() || '';
+    const isCanonicalBm = titleRaw === bmCanonical.title && descriptionRaw === bmCanonical.description;
+    const isCanonicalEn = titleRaw === enCanonical.title && descriptionRaw === enCanonical.description;
+
     if (lang === 'en') {
-      const isCanonicalBm =
-        item.title.trim() === bmCanonical.title && item.description.trim() === bmCanonical.description;
-      if (isCanonicalBm) {
-        return {
-          ...item,
-          title: enCanonical.title,
-          description: enCanonical.description,
-        };
-      }
+      return {
+        ...item,
+        title:
+          item.title_en?.trim() ||
+          (isCanonicalBm ? enCanonical.title : titleRaw) ||
+          enCanonical.title,
+        description:
+          item.description_en?.trim() ||
+          (isCanonicalBm ? enCanonical.description : descriptionRaw) ||
+          enCanonical.description,
+      };
     }
 
-    return item;
+    return {
+      ...item,
+      title:
+        item.title_bm?.trim() ||
+        (isCanonicalEn ? bmCanonical.title : titleRaw) ||
+        bmCanonical.title,
+      description:
+        item.description_bm?.trim() ||
+        (isCanonicalEn ? bmCanonical.description : descriptionRaw) ||
+        bmCanonical.description,
+    };
   });
 
   const featureSectionCopy = {
-    heading: settings.feature_heading_en || FALLBACK_SETTINGS.feature_heading_en,
-    subheading: settings.feature_subheading_en || FALLBACK_SETTINGS.feature_subheading_en,
+    heading: lang === 'en'
+      ? settings.feature_heading_en || FALLBACK_SETTINGS.feature_heading_en
+      : settings.feature_heading_bm || FALLBACK_SETTINGS.feature_heading_bm,
+    subheading: lang === 'en'
+      ? settings.feature_subheading_en || FALLBACK_SETTINGS.feature_subheading_en
+      : settings.feature_subheading_bm || FALLBACK_SETTINGS.feature_subheading_bm,
     cards: [
       {
         Icon: Trophy,
@@ -373,13 +476,21 @@ export default function Home() {
       : settings.font_family || FALLBACK_SETTINGS.font_family;
 
   const socialProofCopy = {
-    badge: settings.testimonials_badge_en || FALLBACK_SETTINGS.testimonials_badge_en,
-    title: settings.testimonials_title_en || FALLBACK_SETTINGS.testimonials_title_en,
+    badge: lang === 'en'
+      ? settings.testimonials_badge_en || FALLBACK_SETTINGS.testimonials_badge_en
+      : settings.testimonials_badge_bm || FALLBACK_SETTINGS.testimonials_badge_bm,
+    title: lang === 'en'
+      ? settings.testimonials_title_en || FALLBACK_SETTINGS.testimonials_title_en
+      : settings.testimonials_title_bm || FALLBACK_SETTINGS.testimonials_title_bm,
   };
 
   const pricingSectionCopy = {
-    title: settings.pricing_section_title_en || FALLBACK_SETTINGS.pricing_section_title_en,
-    link: settings.pricing_section_link_en || FALLBACK_SETTINGS.pricing_section_link_en,
+    title: lang === 'en'
+      ? settings.pricing_section_title_en || FALLBACK_SETTINGS.pricing_section_title_en
+      : settings.pricing_section_title_bm || FALLBACK_SETTINGS.pricing_section_title_bm,
+    link: lang === 'en'
+      ? settings.pricing_section_link_en || FALLBACK_SETTINGS.pricing_section_link_en
+      : settings.pricing_section_link_bm || FALLBACK_SETTINGS.pricing_section_link_bm,
   };
 
   const testimonials = (settings.testimonials_payload?.length > 0
@@ -395,7 +506,7 @@ export default function Home() {
       return {
         quote: item.quote,
         name: item.name,
-        role: item.role || 'EZ Meta User',
+        role: item.role || (lang === 'en' ? 'EZ Meta User' : 'Pengguna EZ Meta'),
         initials,
         avatarTone: tones[index % tones.length],
       };
@@ -403,8 +514,22 @@ export default function Home() {
 
   const pricingPreview = plans.slice(0, 3);
   const defaultFaqs: FaqItem[] = [
-    { id: 'q1', question_bm: t.faq1q, answer_bm: t.faq1a, question_en: t.faq1q, answer_en: t.faq1a, sort_order: 1 },
-    { id: 'q2', question_bm: t.faq2q, answer_bm: t.faq2a, question_en: t.faq2q, answer_en: t.faq2a, sort_order: 2 },
+    {
+      id: 'q1',
+      question_bm: landingDictionary.bm.faq1q,
+      answer_bm: landingDictionary.bm.faq1a,
+      question_en: landingDictionary.en.faq1q,
+      answer_en: landingDictionary.en.faq1a,
+      sort_order: 1,
+    },
+    {
+      id: 'q2',
+      question_bm: landingDictionary.bm.faq2q,
+      answer_bm: landingDictionary.bm.faq2a,
+      question_en: landingDictionary.en.faq2q,
+      answer_en: landingDictionary.en.faq2a,
+      sort_order: 2,
+    },
   ];
   const displayFaqs = faqs.length > 0 ? faqs : defaultFaqs;
 
@@ -452,20 +577,48 @@ export default function Home() {
       <div className="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-emerald-400/20 blur-[120px]" />
       <div className="pointer-events-none absolute -right-20 top-40 h-80 w-80 rounded-full bg-sky-400/15 blur-[130px]" />
 
+      <motion.div
+        className="pointer-events-none absolute left-[8%] top-[18%] text-emerald-300/40"
+        animate={{ y: [0, -15, 0], rotate: [0, 6, 0] }}
+        transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+      >
+        <Orbit className="h-9 w-9" />
+      </motion.div>
+      <motion.div
+        className="pointer-events-none absolute right-[10%] top-[22%] text-sky-300/35"
+        animate={{ y: [0, -12, 0], rotate: [0, -5, 0] }}
+        transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut', delay: 0.8 }}
+      >
+        <Aperture className="h-8 w-8" />
+      </motion.div>
+      <motion.div
+        className="pointer-events-none absolute left-[46%] top-[12%] text-fuchsia-300/30"
+        animate={{ y: [0, -14, 0], rotate: [0, 4, 0] }}
+        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut', delay: 1.3 }}
+      >
+        <Hexagon className="h-7 w-7" />
+      </motion.div>
+
       <div className="border-b border-emerald-400/20 bg-slate-950/75 px-4 py-2 text-center text-xs tracking-[0.22em] text-emerald-200/90 uppercase">
         {alertBanner}
       </div>
 
       <section className="relative px-4 pb-20 pt-20 md:pb-24 md:pt-28">
-        <motion.div
-          key="en"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          <motion.div
+            key={lang}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
           className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1.1fr_0.9fr]"
         >
           <div className="cyber-panel p-8 md:p-10">
-            <h1 className="font-display text-4xl leading-tight text-slate-100 md:text-6xl">{parseHighlightText(heroHeadline, highlightColor)}</h1>
+            <h1
+              className="font-display hero-interactive-headline text-4xl leading-tight text-slate-100 md:text-6xl"
+            >
+              {parseHighlightText(heroHeadline, highlightColor, {
+                interactive: true,
+              })}
+            </h1>
             <p className="mt-6 max-w-2xl text-base text-slate-300 md:text-lg">{parseHighlightText(heroSubheadline, highlightColor)}</p>
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
@@ -535,18 +688,17 @@ export default function Home() {
 
       {settings.ticker_enabled ? (
         <section className="relative overflow-hidden border-y border-[#121212] bg-slate-950/65 py-3">
-          <motion.div
-            animate={{ x: ['0%', '-50%'] }}
-            transition={{ duration: Math.max(8, settings.ticker_speed_seconds || 26), ease: 'linear', repeat: Infinity }}
-            className="flex w-max gap-6 whitespace-nowrap"
+          <div
+            className="ticker-marquee flex w-max gap-6 whitespace-nowrap"
+            style={{ animationDuration: `${Math.max(8, settings.ticker_speed_seconds || 26)}s` }}
           >
-            {[...tickerItems, ...tickerItems, ...tickerItems].map((item, index) => (
+            {[...tickerItems, ...tickerItems].map((item, index) => (
               <span key={`${item}-${index}`} className="inline-flex items-center gap-2 text-xs tracking-[0.16em] text-slate-300 uppercase">
                 <Radar className="h-3.5 w-3.5" style={{ color: 'var(--ez-primary-theme)' }} />
                 {item}
               </span>
             ))}
-          </motion.div>
+          </div>
         </section>
       ) : null}
 
@@ -564,7 +716,7 @@ export default function Home() {
               <motion.div
                 key={item.title}
                 whileHover={{ y: -6 }}
-                className="rounded-2xl border border-slate-800 bg-[#0a0c14] p-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_8px_30px_rgba(15,23,42,0.35)] backdrop-blur-xl transition hover:border-slate-700"
+                className="premium-hover-glow rounded-2xl border border-slate-800 bg-[#0a0c14] p-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_8px_30px_rgba(15,23,42,0.35)] backdrop-blur-xl transition hover:border-slate-700"
               >
                 <div className={`mb-6 inline-flex rounded-xl border p-3 ${item.iconWrap}`}>
                   <item.Icon className={`h-5 w-5 ${item.iconColor}`} />
@@ -683,10 +835,10 @@ export default function Home() {
             {displayFaqs.map((faq) => (
               <AccordionItem key={faq.id} value={faq.id} className="border-b border-[#1a1a1a] px-0">
                 <AccordionTrigger className="text-left text-xl text-slate-100 hover:no-underline">
-                  {parseHighlightText(faq.question_en, highlightColor)}
+                  {parseHighlightText(lang === 'en' ? faq.question_en : faq.question_bm, highlightColor)}
                 </AccordionTrigger>
                 <AccordionContent className="pb-5 text-base text-slate-300">
-                  {parseHighlightText(faq.answer_en, highlightColor)}
+                  {parseHighlightText(lang === 'en' ? faq.answer_en : faq.answer_bm, highlightColor)}
                 </AccordionContent>
               </AccordionItem>
             ))}
@@ -699,9 +851,16 @@ export default function Home() {
           <div className="cyber-panel w-full max-w-lg p-6">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.16em] text-emerald-200">Limited Campaign</p>
+                <p className="text-xs uppercase tracking-[0.16em] text-emerald-200">
+                  {lang === 'en' ? 'Limited Campaign' : 'Kempen Terhad'}
+                </p>
                 <h3 className="mt-1 text-2xl font-semibold text-white">
-                  {parseHighlightText(settings.popup_headline_en || FALLBACK_SETTINGS.popup_headline_en, highlightColor)}
+                  {parseHighlightText(
+                    lang === 'en'
+                      ? settings.popup_headline_en || FALLBACK_SETTINGS.popup_headline_en
+                      : settings.popup_headline_bm || FALLBACK_SETTINGS.popup_headline_bm,
+                    highlightColor
+                  )}
                 </h3>
               </div>
               <button
@@ -715,7 +874,12 @@ export default function Home() {
             </div>
 
             <p className="mt-4 text-sm leading-7 text-slate-300">
-              {parseHighlightText(settings.popup_description_en || FALLBACK_SETTINGS.popup_description_en, highlightColor)}
+              {parseHighlightText(
+                lang === 'en'
+                  ? settings.popup_description_en || FALLBACK_SETTINGS.popup_description_en
+                  : settings.popup_description_bm || FALLBACK_SETTINGS.popup_description_bm,
+                highlightColor
+              )}
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -725,14 +889,19 @@ export default function Home() {
                 className="inline-flex w-full items-center justify-center rounded-md px-4 py-2.5 font-semibold"
                 style={{ backgroundColor: 'var(--ez-button-bg)', color: 'var(--ez-button-text)' }}
               >
-                {parseHighlightText(settings.popup_button_text_en || FALLBACK_SETTINGS.popup_button_text_en, highlightColor)}
+                {parseHighlightText(
+                  lang === 'en'
+                    ? settings.popup_button_text_en || FALLBACK_SETTINGS.popup_button_text_en
+                    : settings.popup_button_text_bm || FALLBACK_SETTINGS.popup_button_text_bm,
+                  highlightColor
+                )}
               </Link>
               <button
                 type="button"
                 onClick={closePopup}
                 className="inline-flex w-full items-center justify-center rounded-md border border-slate-700 px-4 py-2.5 text-slate-200 hover:bg-slate-900"
               >
-                {'Maybe Later'}
+                {lang === 'en' ? 'Maybe Later' : 'Mungkin Nanti'}
               </button>
             </div>
           </div>

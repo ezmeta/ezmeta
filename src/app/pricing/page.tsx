@@ -13,6 +13,7 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { landingDictionary } from '@/lib/i18n/landing';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { buildPricingModel, EMPTY_PRICING_SETTINGS, type PricingSettings } from '@/lib/pricing-model';
+import { SectionReveal } from '@/components/shared/section-reveal';
 
 type FaqItem = {
   id: string;
@@ -148,6 +149,7 @@ export default function PricingPage() {
       <div className="pointer-events-none absolute -left-16 top-20 h-80 w-80 rounded-full bg-emerald-400/20 blur-[130px]" />
       <div className="pointer-events-none absolute -right-20 top-36 h-80 w-80 rounded-full bg-sky-400/15 blur-[130px]" />
 
+      <SectionReveal>
       <section className="relative px-4 pb-16 pt-24 md:pb-20 md:pt-28">
         <div className="mx-auto max-w-5xl text-center">
           <p className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-4 py-1 text-xs tracking-[0.18em] text-emerald-200 uppercase">
@@ -162,7 +164,9 @@ export default function PricingPage() {
           </div>
         </div>
       </section>
+      </SectionReveal>
 
+      <SectionReveal delay={0.03}>
       <section className="px-4 pb-12 md:pb-16">
         <div className="mx-auto grid max-w-6xl gap-4 md:grid-cols-3">
           {[
@@ -190,7 +194,9 @@ export default function PricingPage() {
           ))}
         </div>
       </section>
+      </SectionReveal>
 
+      <SectionReveal delay={0.06}>
       <section className="relative px-4 py-16 md:py-20">
         <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
           {plans.map((plan) => (
@@ -241,7 +247,9 @@ export default function PricingPage() {
           ))}
         </div>
       </section>
+      </SectionReveal>
 
+      <SectionReveal delay={0.09}>
       <section className="px-4 py-20 md:py-24">
         <div className="mx-auto max-w-4xl">
           <h2 className="font-display mb-4 text-center text-3xl text-white">{t.faqTitle}</h2>
@@ -257,6 +265,7 @@ export default function PricingPage() {
           </Accordion>
         </div>
       </section>
+      </SectionReveal>
     </main>
   );
 }

@@ -1,11 +1,20 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter, Playfair_Display } from 'next/font/google';
+import {
+  Bricolage_Grotesque,
+  Geist,
+  Instrument_Serif,
+  Inter,
+  Playfair_Display,
+  Plus_Jakarta_Sans,
+} from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { LanguageProvider } from '@/components/providers/language-provider';
+import { GlobalStyleSync } from '@/components/providers/global-style-sync';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SiteFooter } from '@/components/layout/site-footer';
 import { GlobalCursor } from '@/components/shared/global-cursor';
+import { PageTransition } from '@/components/shared/page-transition';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -16,6 +25,31 @@ const playfair = Playfair_Display({
   subsets: ['latin'],
   variable: '--font-display',
   weight: ['500', '600', '700', '800', '900'],
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ['latin'],
+  variable: '--font-instrument-serif',
+  weight: ['400'],
+  style: ['normal', 'italic'],
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-plus-jakarta-sans',
+  weight: ['400', '500', '600', '700', '800'],
+});
+
+const geistSans = Geist({
+  subsets: ['latin'],
+  variable: '--font-geist-sans',
+  weight: ['400', '500', '600', '700'],
+});
+
+const bricolageGrotesque = Bricolage_Grotesque({
+  subsets: ['latin'],
+  variable: '--font-bricolage-grotesque',
+  weight: ['400', '500', '600', '700', '800'],
 });
 
 export const metadata: Metadata = {
@@ -30,9 +64,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${playfair.variable} font-sans`}>
+      <body
+        className={`${inter.variable} ${playfair.variable} ${instrumentSerif.variable} ${plusJakartaSans.variable} ${geistSans.variable} ${bricolageGrotesque.variable} font-sans`}
+      >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <LanguageProvider>
+            <GlobalStyleSync />
             <div className="min-h-screen bg-slate-950 text-slate-100">
               <GlobalCursor />
               <SiteHeader />
@@ -45,7 +82,7 @@ export default function RootLayout({
                     backgroundSize: '40px 40px',
                   }}
                 />
-                {children}
+                <PageTransition>{children}</PageTransition>
               </div>
               <SiteFooter />
             </div>

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, BookOpen, Bot, CheckCircle2, Gauge, Layers, ShieldCheck, Sparkles } from 'lucide-react';
+import { SectionReveal } from '@/components/shared/section-reveal';
 
 export const metadata: Metadata = {
   title: 'Guide | EZ Meta',
@@ -56,6 +57,7 @@ export default function GuidePage() {
       <div className="pointer-events-none absolute -right-20 top-40 h-80 w-80 rounded-full bg-sky-400/15 blur-[130px]" />
 
       <div className="relative mx-auto max-w-6xl space-y-14 md:space-y-20">
+        <SectionReveal>
         <section className="cyber-panel p-8 md:p-12">
           <p className="inline-flex items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-3 py-1 text-xs tracking-[0.18em] text-emerald-200 uppercase">
             <BookOpen className="h-3.5 w-3.5" />
@@ -76,7 +78,9 @@ export default function GuidePage() {
             </Link>
           </div>
         </section>
+        </SectionReveal>
 
+        <SectionReveal delay={0.03}>
         <section className="space-y-6">
           <h2 className="font-display text-3xl text-white md:text-4xl">Quick Start Sequence</h2>
           <div className="grid gap-4 md:grid-cols-2">
@@ -89,7 +93,9 @@ export default function GuidePage() {
             ))}
           </div>
         </section>
+        </SectionReveal>
 
+        <SectionReveal delay={0.06}>
         <section className="space-y-6">
           <h2 className="font-display text-3xl text-white md:text-4xl">Core Modules</h2>
           <div className="grid gap-5 md:grid-cols-2">
@@ -102,7 +108,9 @@ export default function GuidePage() {
             ))}
           </div>
         </section>
+        </SectionReveal>
 
+        <SectionReveal delay={0.09}>
         <section className="cyber-panel p-6 md:p-8">
           <h2 className="font-display text-3xl text-white md:text-4xl">Operational Best Practices</h2>
           <ul className="mt-5 space-y-3 text-sm text-slate-200">
@@ -123,6 +131,7 @@ export default function GuidePage() {
             Pro insight: keep one controlled experiment running every week for compounding performance gains.
           </p>
         </section>
+        </SectionReveal>
       </div>
     </main>
   );

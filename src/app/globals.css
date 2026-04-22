@@ -100,11 +100,12 @@
 
 @layer utilities {
   .font-display {
-    font-family: var(--font-display), 'Playfair Display', Georgia, serif;
+    font-family: var(--ez-heading-font, var(--font-display)), 'Playfair Display', Georgia, serif;
+    letter-spacing: -0.015em;
   }
 
   .cyber-panel {
-    @apply rounded-2xl border border-emerald-400/20 bg-slate-900/45 backdrop-blur-xl;
+    @apply rounded-2xl border border-white/10 bg-slate-900/45 backdrop-blur-md;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.04),
       0 0 0 1px rgba(47, 242, 161, 0.08),
@@ -120,6 +121,162 @@
 
   .cyber-glow {
     box-shadow: 0 0 0 1px rgba(47, 242, 161, 0.2), 0 0 42px rgba(47, 242, 161, 0.2);
+  }
+
+  .premium-hover-glow {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .premium-hover-glow::before {
+    content: '';
+    position: absolute;
+    inset: -30%;
+    z-index: -1;
+    opacity: 0;
+    background:
+      radial-gradient(
+        circle at 50% 50%,
+        rgba(16, 185, 129, 0.2) 0%,
+        rgba(56, 189, 248, 0.12) 28%,
+        rgba(15, 23, 42, 0) 68%
+      );
+    transform: scale(0.88);
+    transition: opacity 220ms ease, transform 260ms ease;
+    pointer-events: none;
+  }
+
+  .premium-hover-glow::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    opacity: 0;
+    background: conic-gradient(
+      from 0deg,
+      rgba(16, 185, 129, 0.35),
+      rgba(56, 189, 248, 0.2),
+      rgba(232, 121, 249, 0.25),
+      rgba(16, 185, 129, 0.35)
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    animation: border-spin 5s linear infinite;
+    transition: opacity 250ms ease;
+    pointer-events: none;
+  }
+
+  .premium-hover-glow:hover::before {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .premium-hover-glow:hover::after {
+    opacity: 1;
+  }
+
+  .hero-interactive-headline {
+    position: relative;
+    display: inline-block;
+  }
+
+  .hero-inline-word {
+    position: relative;
+    transition: text-shadow 180ms ease, filter 180ms ease;
+    will-change: filter;
+  }
+
+  .hero-tactile-word {
+    display: inline-block;
+    transform: translateZ(0);
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    will-change: transform, filter;
+  }
+
+  .hero-inline-word:hover {
+    text-shadow: 0 0 14px rgba(148, 163, 184, 0.32);
+    filter: brightness(1.07);
+  }
+
+  .hero-highlight-word {
+    position: relative;
+    border-radius: 0.4rem;
+    padding: 0 0.2rem;
+    transition: text-shadow 180ms ease, filter 180ms ease;
+    will-change: filter;
+    backdrop-filter: blur(0px);
+  }
+
+  .hero-highlight-word::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    background: linear-gradient(
+      110deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      rgba(255, 255, 255, 0.2) 45%,
+      rgba(255, 255, 255, 0.04) 100%
+    );
+    transform: translateX(-120%);
+  }
+
+  .hero-highlight-word:hover {
+    text-shadow: 0 0 10px rgba(74, 222, 128, 0.28);
+    filter: brightness(1.12);
+    backdrop-filter: blur(0.6px);
+  }
+
+  .hero-highlight-word:hover::before {
+    opacity: 1;
+    animation: highlight-shimmer 1100ms ease forwards;
+  }
+
+  .ticker-marquee {
+    animation-name: ticker-scroll;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    will-change: transform;
+  }
+
+  @keyframes ticker-scroll {
+    0% {
+      transform: translate3d(0, 0, 0);
+    }
+    100% {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+
+  @keyframes border-spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes highlight-shimmer {
+    0% {
+      transform: translateX(-120%);
+    }
+    100% {
+      transform: translateX(120%);
+    }
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--ez-heading-font, var(--font-display)), serif !important;
   }
 
   .cyber-headline {

@@ -79,6 +79,10 @@ export type SiteSettingsMap = {
     icon: string;
     title: string;
     description: string;
+    title_bm?: string;
+    title_en?: string;
+    description_bm?: string;
+    description_en?: string;
   }>;
   testimonials_payload: Array<{
     id: string;
@@ -334,36 +338,60 @@ const DEFAULT_SETTINGS: SiteSettingsMap = {
       icon: 'Trophy',
       title: 'Winning Ad Detector',
       description: 'AI scan semua campaigns dan detect ads yang perform terbaik. Score 0–100. Alert terus bila ada winning ad.',
+      title_bm: 'Winning Ad Detector',
+      title_en: 'Winning Ad Detector',
+      description_bm: 'AI scan semua campaigns dan detect ads yang perform terbaik. Score 0–100. Alert terus bila ada winning ad.',
+      description_en: 'AI scans all campaigns and detects top-performing ads.',
     },
     {
       id: 'usp-2',
       icon: 'Globe2',
       title: 'Creative Fatigue Detector',
       description: 'Detect CTR drop, frequency tinggi, dan CPM naik — tanda creative dah mati. Alert awal sebelum performance jatuh teruk.',
+      title_bm: 'Creative Fatigue Detector',
+      title_en: 'Creative Fatigue Detector',
+      description_bm: 'Detect CTR drop, frequency tinggi, dan CPM naik — tanda creative dah mati. Alert awal sebelum performance jatuh teruk.',
+      description_en: 'Detect CTR drop, high frequency, and rising CPM before performance dips.',
     },
     {
       id: 'usp-3',
       icon: 'HandCoins',
       title: 'Budget Tracker',
       description: 'Monitor budget bulanan semua campaigns. Alert bila dah guna 80% serta pacing cadangan untuk baki hari.',
+      title_bm: 'Budget Tracker',
+      title_en: 'Budget Tracker',
+      description_bm: 'Monitor budget bulanan semua campaigns. Alert bila dah guna 80% serta pacing cadangan untuk baki hari.',
+      description_en: 'Monitor monthly budgets and receive alerts when spend approaches limits.',
     },
     {
       id: 'usp-4',
       icon: 'Heart',
       title: 'Campaign Health Score',
       description: 'Setiap campaign dapat gred A–D berdasarkan ROAS, CTR, CPC, frequency dan conversions.',
+      title_bm: 'Campaign Health Score',
+      title_en: 'Campaign Health Score',
+      description_bm: 'Setiap campaign dapat gred A–D berdasarkan ROAS, CTR, CPC, frequency dan conversions.',
+      description_en: 'Each campaign receives an A–D grade based on ROAS, CTR, CPC, frequency, and conversions.',
     },
     {
       id: 'usp-5',
       icon: 'BarChart3',
       title: 'Laporan AI dalam BM',
       description: 'Laporan harian dalam Bahasa Malaysia, mudah faham dan actionable terus ke Telegram.',
+      title_bm: 'Laporan AI dalam BM',
+      title_en: 'AI Reports',
+      description_bm: 'Laporan harian dalam Bahasa Malaysia, mudah faham dan actionable terus ke Telegram.',
+      description_en: 'Daily reports in English that are easy to understand and immediately actionable via Telegram.',
     },
     {
       id: 'usp-6',
       icon: 'Bot',
       title: 'AI Recommendations',
       description: 'AI bagi cadangan automasi yang jelas untuk setiap campaign.',
+      title_bm: 'AI Recommendations',
+      title_en: 'AI Recommendations',
+      description_bm: 'AI bagi cadangan automasi yang jelas untuk setiap campaign.',
+      description_en: 'Clear AI automation recommendations for every campaign.',
     },
   ],
   testimonials_payload: [
@@ -486,14 +514,21 @@ function normalizeUspItems(
     const fromSource = source[index];
     const fromFallback = fallback[index] ?? fallback[0];
 
-    const title = String(fromSource?.title ?? '').trim() || fromFallback.title;
-    const description = String(fromSource?.description ?? '').trim() || fromFallback.description;
+    const titleBm = String((fromSource as any)?.title_bm ?? '').trim() || String(fromSource?.title ?? '').trim() || fromFallback.title_bm || fromFallback.title;
+    const titleEn = String((fromSource as any)?.title_en ?? '').trim() || fromFallback.title_en || fromFallback.title;
+    const descriptionBm =
+      String((fromSource as any)?.description_bm ?? '').trim() || String(fromSource?.description ?? '').trim() || fromFallback.description_bm || fromFallback.description;
+    const descriptionEn = String((fromSource as any)?.description_en ?? '').trim() || fromFallback.description_en || fromFallback.description;
     const icon = String(fromSource?.icon ?? '').trim() || fromFallback.icon;
 
     return {
       id: `usp-${index + 1}`,
-      title,
-      description,
+      title: titleBm,
+      description: descriptionBm,
+      title_bm: titleBm,
+      title_en: titleEn,
+      description_bm: descriptionBm,
+      description_en: descriptionEn,
       icon,
     };
   });
@@ -1579,6 +1614,71 @@ function parseCheckboxValue(formData: FormData, key: string): boolean {
   return values.includes('on') || values.includes('true') || values.includes('1');
 }
 
+type SiteSettingsRowMap = Map<string, any>;
+
+async function getCurrentSiteSettingsRowMap(): Promise<SiteSettingsRowMap> {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(supabaseConfig.url, supabaseConfig.anonKey, {
+    cookies: {
+      get(name: string) {
+        return cookieStore.get(name)?.value;
+      },
+    },
+  });
+
+  const timeout = timeoutController(4000);
+  const { data } = await (supabase as any).from('site_settings').select('key, value').abortSignal(timeout.signal);
+  timeout.clear();
+
+  const map = new Map<string, any>();
+  for (const row of (data ?? []) as Array<{ key: string; value: any }>) {
+    map.set(row.key, row.value);
+  }
+  return map;
+}
+
+function getExistingText(existing: SiteSettingsRowMap, key: string, fallback: string): string {
+  const raw = existing.get(key)?.text;
+  return typeof raw === 'string' && raw.trim().length > 0 ? raw : fallback;
+}
+
+function getExistingItems(existing: SiteSettingsRowMap, key: string, fallback: string[]): string[] {
+  const raw = existing.get(key)?.items;
+  return Array.isArray(raw) && raw.length > 0 ? (raw as string[]) : fallback;
+}
+
+function getExistingNumber(existing: SiteSettingsRowMap, key: string, field: string, fallback: number): number {
+  const raw = Number(existing.get(key)?.[field]);
+  return Number.isFinite(raw) ? raw : fallback;
+}
+
+function resolveTextInput(formData: FormData, key: string, existing: SiteSettingsRowMap, fallback: string): string {
+  if (!formData.has(key)) return getExistingText(existing, key, fallback);
+  const value = String(formData.get(key) || '').trim();
+  return value.length > 0 ? value : getExistingText(existing, key, fallback);
+}
+
+function resolveListInput(formData: FormData, key: string, existing: SiteSettingsRowMap, fallback: string[]): string[] {
+  if (!formData.has(key)) return getExistingItems(existing, key, fallback);
+  const list = String(formData.get(key) || '')
+    .split('\n')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return list.length > 0 ? list : getExistingItems(existing, key, fallback);
+}
+
+function resolveNumberInput(
+  formData: FormData,
+  key: string,
+  existing: SiteSettingsRowMap,
+  field: string,
+  fallback: number
+): number {
+  if (!formData.has(key)) return getExistingNumber(existing, key, field, fallback);
+  const value = Number(formData.get(key));
+  return Number.isFinite(value) ? value : getExistingNumber(existing, key, field, fallback);
+}
+
 async function saveSettingsRows(options: {
   formData: FormData;
   rows: Array<{ key: string; value: any }>;
@@ -1660,9 +1760,23 @@ async function saveSettingsRows(options: {
 }
 
 export async function savePricingModuleSettings(formData: FormData): Promise<void> {
-  const pricing_starter_price = Number(formData.get('pricing_starter_price') || DEFAULT_SETTINGS.pricing_starter_price);
-  const pricing_pro_price = Number(formData.get('pricing_pro_price') || DEFAULT_SETTINGS.pricing_pro_price);
-  const pricing_agency_price = Number(formData.get('pricing_agency_price') || DEFAULT_SETTINGS.pricing_agency_price);
+  const existing = await getCurrentSiteSettingsRowMap();
+
+  const pricing_starter_price = resolveNumberInput(
+    formData,
+    'pricing_starter_price',
+    existing,
+    'amount',
+    DEFAULT_SETTINGS.pricing_starter_price
+  );
+  const pricing_pro_price = resolveNumberInput(formData, 'pricing_pro_price', existing, 'amount', DEFAULT_SETTINGS.pricing_pro_price);
+  const pricing_agency_price = resolveNumberInput(
+    formData,
+    'pricing_agency_price',
+    existing,
+    'amount',
+    DEFAULT_SETTINGS.pricing_agency_price
+  );
   const pricing_effective_date = String(formData.get('pricing_effective_date') || '').trim();
   const pricingButtonOverridePresent = formData.has('pricing_button_override_enabled_present');
   const pricingButtonOverrideEnabled = pricingButtonOverridePresent
@@ -1673,30 +1787,45 @@ export async function savePricingModuleSettings(formData: FormData): Promise<voi
     { key: 'pricing_starter_price', value: { amount: pricing_starter_price, currency: 'RM', interval: 'month' } },
     { key: 'pricing_pro_price', value: { amount: pricing_pro_price, currency: 'RM', interval: 'month' } },
     { key: 'pricing_agency_price', value: { amount: pricing_agency_price, currency: 'RM', interval: 'month' } },
-    { key: 'starter_name_bm', value: { text: String(formData.get('starter_name_bm') || DEFAULT_SETTINGS.starter_name_bm) } },
-    { key: 'starter_name_en', value: { text: String(formData.get('starter_name_en') || DEFAULT_SETTINGS.starter_name_en) } },
-    { key: 'pro_name_bm', value: { text: String(formData.get('pro_name_bm') || DEFAULT_SETTINGS.pro_name_bm) } },
-    { key: 'pro_name_en', value: { text: String(formData.get('pro_name_en') || DEFAULT_SETTINGS.pro_name_en) } },
-    { key: 'agency_name_bm', value: { text: String(formData.get('agency_name_bm') || DEFAULT_SETTINGS.agency_name_bm) } },
-    { key: 'agency_name_en', value: { text: String(formData.get('agency_name_en') || DEFAULT_SETTINGS.agency_name_en) } },
-    { key: 'starter_desc_bm', value: { text: String(formData.get('starter_desc_bm') || DEFAULT_SETTINGS.starter_desc_bm) } },
-    { key: 'starter_desc_en', value: { text: String(formData.get('starter_desc_en') || DEFAULT_SETTINGS.starter_desc_en) } },
-    { key: 'pro_desc_bm', value: { text: String(formData.get('pro_desc_bm') || DEFAULT_SETTINGS.pro_desc_bm) } },
-    { key: 'pro_desc_en', value: { text: String(formData.get('pro_desc_en') || DEFAULT_SETTINGS.pro_desc_en) } },
-    { key: 'agency_desc_bm', value: { text: String(formData.get('agency_desc_bm') || DEFAULT_SETTINGS.agency_desc_bm) } },
-    { key: 'agency_desc_en', value: { text: String(formData.get('agency_desc_en') || DEFAULT_SETTINGS.agency_desc_en) } },
-    { key: 'starter_bonus_accounts', value: { count: Number(formData.get('starter_bonus_accounts') || DEFAULT_SETTINGS.starter_bonus_accounts) } },
-    { key: 'pro_bonus_accounts', value: { count: Number(formData.get('pro_bonus_accounts') || DEFAULT_SETTINGS.pro_bonus_accounts) } },
-    { key: 'agency_bonus_accounts', value: { count: Number(formData.get('agency_bonus_accounts') || DEFAULT_SETTINGS.agency_bonus_accounts) } },
-    { key: 'contact_whatsapp', value: { number: String(formData.get('contact_whatsapp') || DEFAULT_SETTINGS.contact_whatsapp), label: 'WhatsApp Support' } },
+    { key: 'starter_name_bm', value: { text: resolveTextInput(formData, 'starter_name_bm', existing, DEFAULT_SETTINGS.starter_name_bm) } },
+    { key: 'starter_name_en', value: { text: resolveTextInput(formData, 'starter_name_en', existing, DEFAULT_SETTINGS.starter_name_en) } },
+    { key: 'pro_name_bm', value: { text: resolveTextInput(formData, 'pro_name_bm', existing, DEFAULT_SETTINGS.pro_name_bm) } },
+    { key: 'pro_name_en', value: { text: resolveTextInput(formData, 'pro_name_en', existing, DEFAULT_SETTINGS.pro_name_en) } },
+    { key: 'agency_name_bm', value: { text: resolveTextInput(formData, 'agency_name_bm', existing, DEFAULT_SETTINGS.agency_name_bm) } },
+    { key: 'agency_name_en', value: { text: resolveTextInput(formData, 'agency_name_en', existing, DEFAULT_SETTINGS.agency_name_en) } },
+    { key: 'starter_desc_bm', value: { text: resolveTextInput(formData, 'starter_desc_bm', existing, DEFAULT_SETTINGS.starter_desc_bm) } },
+    { key: 'starter_desc_en', value: { text: resolveTextInput(formData, 'starter_desc_en', existing, DEFAULT_SETTINGS.starter_desc_en) } },
+    { key: 'pro_desc_bm', value: { text: resolveTextInput(formData, 'pro_desc_bm', existing, DEFAULT_SETTINGS.pro_desc_bm) } },
+    { key: 'pro_desc_en', value: { text: resolveTextInput(formData, 'pro_desc_en', existing, DEFAULT_SETTINGS.pro_desc_en) } },
+    { key: 'agency_desc_bm', value: { text: resolveTextInput(formData, 'agency_desc_bm', existing, DEFAULT_SETTINGS.agency_desc_bm) } },
+    { key: 'agency_desc_en', value: { text: resolveTextInput(formData, 'agency_desc_en', existing, DEFAULT_SETTINGS.agency_desc_en) } },
+    {
+      key: 'starter_bonus_accounts',
+      value: { count: resolveNumberInput(formData, 'starter_bonus_accounts', existing, 'count', DEFAULT_SETTINGS.starter_bonus_accounts) },
+    },
+    {
+      key: 'pro_bonus_accounts',
+      value: { count: resolveNumberInput(formData, 'pro_bonus_accounts', existing, 'count', DEFAULT_SETTINGS.pro_bonus_accounts) },
+    },
+    {
+      key: 'agency_bonus_accounts',
+      value: { count: resolveNumberInput(formData, 'agency_bonus_accounts', existing, 'count', DEFAULT_SETTINGS.agency_bonus_accounts) },
+    },
+    {
+      key: 'contact_whatsapp',
+      value: {
+        number: resolveTextInput(formData, 'contact_whatsapp', existing, DEFAULT_SETTINGS.contact_whatsapp),
+        label: 'WhatsApp Support',
+      },
+    },
     { key: 'pricing_button_override_enabled', value: { enabled: pricingButtonOverrideEnabled } },
     {
       key: 'pricing_button_bg_color',
-      value: { text: String(formData.get('pricing_button_bg_color') || DEFAULT_SETTINGS.pricing_button_bg_color) },
+      value: { text: resolveTextInput(formData, 'pricing_button_bg_color', existing, DEFAULT_SETTINGS.pricing_button_bg_color) },
     },
     {
       key: 'pricing_button_text_color',
-      value: { text: String(formData.get('pricing_button_text_color') || DEFAULT_SETTINGS.pricing_button_text_color) },
+      value: { text: resolveTextInput(formData, 'pricing_button_text_color', existing, DEFAULT_SETTINGS.pricing_button_text_color) },
     },
   ];
 
@@ -1732,37 +1861,37 @@ export async function savePricingModuleSettings(formData: FormData): Promise<voi
 }
 
 export async function saveContentModuleSettings(formData: FormData): Promise<void> {
-  const toList = (raw: string, fallback: string[]) => {
-    const list = raw.split('\n').map((item) => item.trim()).filter(Boolean);
-    return list.length > 0 ? list : fallback;
-  };
+  const existing = await getCurrentSiteSettingsRowMap();
 
   const tickerEnabledPresent = formData.has('ticker_enabled_present');
   const tickerEnabled = tickerEnabledPresent ? parseCheckboxValue(formData, 'ticker_enabled') : DEFAULT_SETTINGS.ticker_enabled;
 
   const rows = [
-    { key: 'hero_headline_bm', value: { text: String(formData.get('hero_headline_bm') || DEFAULT_SETTINGS.hero_headline_bm) } },
-    { key: 'hero_headline_en', value: { text: String(formData.get('hero_headline_en') || DEFAULT_SETTINGS.hero_headline_en) } },
-    { key: 'hero_subheadline_bm', value: { text: String(formData.get('hero_subheadline_bm') || DEFAULT_SETTINGS.hero_subheadline_bm) } },
-    { key: 'hero_subheadline_en', value: { text: String(formData.get('hero_subheadline_en') || DEFAULT_SETTINGS.hero_subheadline_en) } },
-    { key: 'feature_heading_bm', value: { text: String(formData.get('feature_heading_bm') || DEFAULT_SETTINGS.feature_heading_bm) } },
-    { key: 'feature_heading_en', value: { text: String(formData.get('feature_heading_en') || DEFAULT_SETTINGS.feature_heading_en) } },
-    { key: 'feature_subheading_bm', value: { text: String(formData.get('feature_subheading_bm') || DEFAULT_SETTINGS.feature_subheading_bm) } },
-    { key: 'feature_subheading_en', value: { text: String(formData.get('feature_subheading_en') || DEFAULT_SETTINGS.feature_subheading_en) } },
-    { key: 'testimonials_badge_bm', value: { text: String(formData.get('testimonials_badge_bm') || DEFAULT_SETTINGS.testimonials_badge_bm) } },
-    { key: 'testimonials_badge_en', value: { text: String(formData.get('testimonials_badge_en') || DEFAULT_SETTINGS.testimonials_badge_en) } },
-    { key: 'testimonials_title_bm', value: { text: String(formData.get('testimonials_title_bm') || DEFAULT_SETTINGS.testimonials_title_bm) } },
-    { key: 'testimonials_title_en', value: { text: String(formData.get('testimonials_title_en') || DEFAULT_SETTINGS.testimonials_title_en) } },
-    { key: 'pricing_section_title_bm', value: { text: String(formData.get('pricing_section_title_bm') || DEFAULT_SETTINGS.pricing_section_title_bm) } },
-    { key: 'pricing_section_title_en', value: { text: String(formData.get('pricing_section_title_en') || DEFAULT_SETTINGS.pricing_section_title_en) } },
-    { key: 'pricing_section_link_bm', value: { text: String(formData.get('pricing_section_link_bm') || DEFAULT_SETTINGS.pricing_section_link_bm) } },
-    { key: 'pricing_section_link_en', value: { text: String(formData.get('pricing_section_link_en') || DEFAULT_SETTINGS.pricing_section_link_en) } },
-    { key: 'alert_banner_text_bm', value: { text: String(formData.get('alert_banner_text_bm') || DEFAULT_SETTINGS.alert_banner_text_bm) } },
-    { key: 'alert_banner_text_en', value: { text: String(formData.get('alert_banner_text_en') || DEFAULT_SETTINGS.alert_banner_text_en) } },
+    { key: 'hero_headline_bm', value: { text: resolveTextInput(formData, 'hero_headline_bm', existing, DEFAULT_SETTINGS.hero_headline_bm) } },
+    { key: 'hero_headline_en', value: { text: resolveTextInput(formData, 'hero_headline_en', existing, DEFAULT_SETTINGS.hero_headline_en) } },
+    { key: 'hero_subheadline_bm', value: { text: resolveTextInput(formData, 'hero_subheadline_bm', existing, DEFAULT_SETTINGS.hero_subheadline_bm) } },
+    { key: 'hero_subheadline_en', value: { text: resolveTextInput(formData, 'hero_subheadline_en', existing, DEFAULT_SETTINGS.hero_subheadline_en) } },
+    { key: 'feature_heading_bm', value: { text: resolveTextInput(formData, 'feature_heading_bm', existing, DEFAULT_SETTINGS.feature_heading_bm) } },
+    { key: 'feature_heading_en', value: { text: resolveTextInput(formData, 'feature_heading_en', existing, DEFAULT_SETTINGS.feature_heading_en) } },
+    { key: 'feature_subheading_bm', value: { text: resolveTextInput(formData, 'feature_subheading_bm', existing, DEFAULT_SETTINGS.feature_subheading_bm) } },
+    { key: 'feature_subheading_en', value: { text: resolveTextInput(formData, 'feature_subheading_en', existing, DEFAULT_SETTINGS.feature_subheading_en) } },
+    { key: 'testimonials_badge_bm', value: { text: resolveTextInput(formData, 'testimonials_badge_bm', existing, DEFAULT_SETTINGS.testimonials_badge_bm) } },
+    { key: 'testimonials_badge_en', value: { text: resolveTextInput(formData, 'testimonials_badge_en', existing, DEFAULT_SETTINGS.testimonials_badge_en) } },
+    { key: 'testimonials_title_bm', value: { text: resolveTextInput(formData, 'testimonials_title_bm', existing, DEFAULT_SETTINGS.testimonials_title_bm) } },
+    { key: 'testimonials_title_en', value: { text: resolveTextInput(formData, 'testimonials_title_en', existing, DEFAULT_SETTINGS.testimonials_title_en) } },
+    { key: 'pricing_section_title_bm', value: { text: resolveTextInput(formData, 'pricing_section_title_bm', existing, DEFAULT_SETTINGS.pricing_section_title_bm) } },
+    { key: 'pricing_section_title_en', value: { text: resolveTextInput(formData, 'pricing_section_title_en', existing, DEFAULT_SETTINGS.pricing_section_title_en) } },
+    { key: 'pricing_section_link_bm', value: { text: resolveTextInput(formData, 'pricing_section_link_bm', existing, DEFAULT_SETTINGS.pricing_section_link_bm) } },
+    { key: 'pricing_section_link_en', value: { text: resolveTextInput(formData, 'pricing_section_link_en', existing, DEFAULT_SETTINGS.pricing_section_link_en) } },
+    { key: 'alert_banner_text_bm', value: { text: resolveTextInput(formData, 'alert_banner_text_bm', existing, DEFAULT_SETTINGS.alert_banner_text_bm) } },
+    { key: 'alert_banner_text_en', value: { text: resolveTextInput(formData, 'alert_banner_text_en', existing, DEFAULT_SETTINGS.alert_banner_text_en) } },
     { key: 'ticker_enabled', value: { enabled: tickerEnabled } },
-    { key: 'ticker_speed_seconds', value: { seconds: Number(formData.get('ticker_speed_seconds') || DEFAULT_SETTINGS.ticker_speed_seconds) } },
-    { key: 'ticker_items_bm', value: { items: toList(String(formData.get('ticker_items_bm') || ''), DEFAULT_SETTINGS.ticker_items_bm) } },
-    { key: 'ticker_items_en', value: { items: toList(String(formData.get('ticker_items_en') || ''), DEFAULT_SETTINGS.ticker_items_en) } },
+    {
+      key: 'ticker_speed_seconds',
+      value: { seconds: resolveNumberInput(formData, 'ticker_speed_seconds', existing, 'seconds', DEFAULT_SETTINGS.ticker_speed_seconds) },
+    },
+    { key: 'ticker_items_bm', value: { items: resolveListInput(formData, 'ticker_items_bm', existing, DEFAULT_SETTINGS.ticker_items_bm) } },
+    { key: 'ticker_items_en', value: { items: resolveListInput(formData, 'ticker_items_en', existing, DEFAULT_SETTINGS.ticker_items_en) } },
   ];
 
   await saveSettingsRows({
@@ -1775,12 +1904,14 @@ export async function saveContentModuleSettings(formData: FormData): Promise<voi
 }
 
 export async function saveGlobalStylesModuleSettings(formData: FormData): Promise<void> {
+  const existing = await getCurrentSiteSettingsRowMap();
+
   const rows = [
-    { key: 'primary_theme_color', value: { text: String(formData.get('primary_theme_color') || DEFAULT_SETTINGS.primary_theme_color) } },
-    { key: 'highlight_color', value: { text: String(formData.get('highlight_color') || DEFAULT_SETTINGS.highlight_color) } },
-    { key: 'button_bg_color', value: { text: String(formData.get('button_bg_color') || DEFAULT_SETTINGS.button_bg_color) } },
-    { key: 'button_text_color', value: { text: String(formData.get('button_text_color') || DEFAULT_SETTINGS.button_text_color) } },
-    { key: 'font_family', value: { text: String(formData.get('font_family') || DEFAULT_SETTINGS.font_family) } },
+    { key: 'primary_theme_color', value: { text: resolveTextInput(formData, 'primary_theme_color', existing, DEFAULT_SETTINGS.primary_theme_color) } },
+    { key: 'highlight_color', value: { text: resolveTextInput(formData, 'highlight_color', existing, DEFAULT_SETTINGS.highlight_color) } },
+    { key: 'button_bg_color', value: { text: resolveTextInput(formData, 'button_bg_color', existing, DEFAULT_SETTINGS.button_bg_color) } },
+    { key: 'button_text_color', value: { text: resolveTextInput(formData, 'button_text_color', existing, DEFAULT_SETTINGS.button_text_color) } },
+    { key: 'font_family', value: { text: resolveTextInput(formData, 'font_family', existing, DEFAULT_SETTINGS.font_family) } },
   ];
 
   await saveSettingsRows({
@@ -1795,11 +1926,20 @@ export async function saveGlobalStylesModuleSettings(formData: FormData): Promis
 export async function saveUspModuleSettings(formData: FormData): Promise<void> {
   const rawItems: SiteSettingsMap['usp_features_payload'] = [];
   for (let i = 1; i <= 6; i += 1) {
+    const title_bm = String(formData.get(`usp_title_bm_${i}`) || '').trim();
+    const title_en = String(formData.get(`usp_title_en_${i}`) || '').trim();
+    const description_bm = String(formData.get(`usp_description_bm_${i}`) || '').trim();
+    const description_en = String(formData.get(`usp_description_en_${i}`) || '').trim();
+
     rawItems.push({
       id: `usp-${i}`,
       icon: String(formData.get(`usp_icon_${i}`) || '').trim(),
-      title: String(formData.get(`usp_title_${i}`) || '').trim(),
-      description: String(formData.get(`usp_description_${i}`) || '').trim(),
+      title: title_bm,
+      description: description_bm,
+      title_bm,
+      title_en,
+      description_bm,
+      description_en,
     });
   }
 
@@ -1854,22 +1994,37 @@ export async function saveTestimonialsModuleSettings(formData: FormData): Promis
 }
 
 export async function saveFaqModuleSettings(formData: FormData): Promise<void> {
-  const toList = (raw: string, fallback: string[]) => {
-    const list = raw.split('\n').map((item) => item.trim()).filter(Boolean);
-    return list.length > 0 ? list : fallback;
-  };
+  const existing = await getCurrentSiteSettingsRowMap();
 
   const parsedFaqs = parseFaqRepeater(formData);
   const faqs_payload = String(formData.get('faqs_payload') || '');
   const parsedFaqsFinal = parsedFaqs.length > 0 ? parsedFaqs : parseFaqPayload(faqs_payload);
 
   const rows = [
-    { key: 'pricing_starter_benefits_bm', value: { items: toList(String(formData.get('pricing_starter_benefits_bm') || ''), DEFAULT_SETTINGS.pricing_starter_benefits_bm) } },
-    { key: 'pricing_starter_benefits_en', value: { items: toList(String(formData.get('pricing_starter_benefits_en') || ''), DEFAULT_SETTINGS.pricing_starter_benefits_en) } },
-    { key: 'pricing_pro_benefits_bm', value: { items: toList(String(formData.get('pricing_pro_benefits_bm') || ''), DEFAULT_SETTINGS.pricing_pro_benefits_bm) } },
-    { key: 'pricing_pro_benefits_en', value: { items: toList(String(formData.get('pricing_pro_benefits_en') || ''), DEFAULT_SETTINGS.pricing_pro_benefits_en) } },
-    { key: 'pricing_agency_benefits_bm', value: { items: toList(String(formData.get('pricing_agency_benefits_bm') || ''), DEFAULT_SETTINGS.pricing_agency_benefits_bm) } },
-    { key: 'pricing_agency_benefits_en', value: { items: toList(String(formData.get('pricing_agency_benefits_en') || ''), DEFAULT_SETTINGS.pricing_agency_benefits_en) } },
+    {
+      key: 'pricing_starter_benefits_bm',
+      value: { items: resolveListInput(formData, 'pricing_starter_benefits_bm', existing, DEFAULT_SETTINGS.pricing_starter_benefits_bm) },
+    },
+    {
+      key: 'pricing_starter_benefits_en',
+      value: { items: resolveListInput(formData, 'pricing_starter_benefits_en', existing, DEFAULT_SETTINGS.pricing_starter_benefits_en) },
+    },
+    {
+      key: 'pricing_pro_benefits_bm',
+      value: { items: resolveListInput(formData, 'pricing_pro_benefits_bm', existing, DEFAULT_SETTINGS.pricing_pro_benefits_bm) },
+    },
+    {
+      key: 'pricing_pro_benefits_en',
+      value: { items: resolveListInput(formData, 'pricing_pro_benefits_en', existing, DEFAULT_SETTINGS.pricing_pro_benefits_en) },
+    },
+    {
+      key: 'pricing_agency_benefits_bm',
+      value: { items: resolveListInput(formData, 'pricing_agency_benefits_bm', existing, DEFAULT_SETTINGS.pricing_agency_benefits_bm) },
+    },
+    {
+      key: 'pricing_agency_benefits_en',
+      value: { items: resolveListInput(formData, 'pricing_agency_benefits_en', existing, DEFAULT_SETTINGS.pricing_agency_benefits_en) },
+    },
     { key: 'faqs_payload', value: { items: parsedFaqsFinal } },
   ];
 
@@ -1903,6 +2058,8 @@ export async function saveFaqModuleSettings(formData: FormData): Promise<void> {
 }
 
 export async function savePopupModuleSettings(formData: FormData): Promise<void> {
+  const existing = await getCurrentSiteSettingsRowMap();
+
   const popupEnabledPresent = formData.has('popup_enabled_present');
   const popupEnabled = popupEnabledPresent ? parseCheckboxValue(formData, 'popup_enabled') : DEFAULT_SETTINGS.popup_enabled;
 
@@ -1914,15 +2071,29 @@ export async function savePopupModuleSettings(formData: FormData): Promise<void>
 
   const rows = [
     { key: 'popup_enabled', value: { enabled: popupEnabled } },
-    { key: 'popup_headline_bm', value: { text: String(formData.get('popup_headline_bm') || DEFAULT_SETTINGS.popup_headline_bm) } },
-    { key: 'popup_headline_en', value: { text: String(formData.get('popup_headline_en') || DEFAULT_SETTINGS.popup_headline_en) } },
-    { key: 'popup_description_bm', value: { text: String(formData.get('popup_description_bm') || DEFAULT_SETTINGS.popup_description_bm) } },
-    { key: 'popup_description_en', value: { text: String(formData.get('popup_description_en') || DEFAULT_SETTINGS.popup_description_en) } },
-    { key: 'popup_button_text_bm', value: { text: String(formData.get('popup_button_text_bm') || DEFAULT_SETTINGS.popup_button_text_bm) } },
-    { key: 'popup_button_text_en', value: { text: String(formData.get('popup_button_text_en') || DEFAULT_SETTINGS.popup_button_text_en) } },
-    { key: 'popup_redirect_url', value: { text: String(formData.get('popup_redirect_url') || DEFAULT_SETTINGS.popup_redirect_url) } },
-    { key: 'popup_start_date', value: { text: normalizeIsoInput(String(formData.get('popup_start_date') || '')) } },
-    { key: 'popup_end_date', value: { text: normalizeIsoInput(String(formData.get('popup_end_date') || '')) } },
+    { key: 'popup_headline_bm', value: { text: resolveTextInput(formData, 'popup_headline_bm', existing, DEFAULT_SETTINGS.popup_headline_bm) } },
+    { key: 'popup_headline_en', value: { text: resolveTextInput(formData, 'popup_headline_en', existing, DEFAULT_SETTINGS.popup_headline_en) } },
+    { key: 'popup_description_bm', value: { text: resolveTextInput(formData, 'popup_description_bm', existing, DEFAULT_SETTINGS.popup_description_bm) } },
+    { key: 'popup_description_en', value: { text: resolveTextInput(formData, 'popup_description_en', existing, DEFAULT_SETTINGS.popup_description_en) } },
+    { key: 'popup_button_text_bm', value: { text: resolveTextInput(formData, 'popup_button_text_bm', existing, DEFAULT_SETTINGS.popup_button_text_bm) } },
+    { key: 'popup_button_text_en', value: { text: resolveTextInput(formData, 'popup_button_text_en', existing, DEFAULT_SETTINGS.popup_button_text_en) } },
+    { key: 'popup_redirect_url', value: { text: resolveTextInput(formData, 'popup_redirect_url', existing, DEFAULT_SETTINGS.popup_redirect_url) } },
+    {
+      key: 'popup_start_date',
+      value: {
+        text: formData.has('popup_start_date')
+          ? normalizeIsoInput(String(formData.get('popup_start_date') || ''))
+          : getExistingText(existing, 'popup_start_date', DEFAULT_SETTINGS.popup_start_date),
+      },
+    },
+    {
+      key: 'popup_end_date',
+      value: {
+        text: formData.has('popup_end_date')
+          ? normalizeIsoInput(String(formData.get('popup_end_date') || ''))
+          : getExistingText(existing, 'popup_end_date', DEFAULT_SETTINGS.popup_end_date),
+      },
+    },
   ];
 
   await saveSettingsRows({

@@ -1,0 +1,13 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="United Kingdom flag">
+  <clipPath id="clipCircleGb"><circle cx="32" cy="32" r="32" /></clipPath>
+  <g clip-path="url(#clipCircleGb)">
+    <rect width="64" height="64" fill="#012169" />
+    <path d="M0 0l64 64M64 0L0 64" stroke="#ffffff" stroke-width="12" />
+    <path d="M0 0l64 64M64 0L0 64" stroke="#c8102e" stroke-width="6" />
+    <rect x="26" width="12" height="64" fill="#ffffff" />
+    <rect y="26" width="64" height="12" fill="#ffffff" />
+    <rect x="28.5" width="7" height="64" fill="#c8102e" />
+    <rect y="28.5" width="64" height="7" fill="#c8102e" />
+  </g>
+</svg>
+

@@ -13,9 +13,15 @@ import {
 } from '@/app/actions/admin-settings';
 import { SaveStatusToast } from '@/components/admin/save-status-toast';
 import { SettingsDynamicFields } from '@/components/admin/settings-dynamic-fields';
+import {
+  ContentLanguageFields,
+  PopupLanguageFields,
+  PricingBenefitsLanguageFields,
+  PricingLanguageFields,
+  UspLanguageFields,
+} from '@/components/admin/bilingual-module-fields';
 import { ModuleSaveButton } from '@/components/admin/module-save-button';
 import { AdminSidebar } from '@/components/admin/admin-sidebar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 
@@ -30,33 +36,45 @@ export default async function AdminSettingsPage() {
   const uspFallback = [
     {
       icon: 'Trophy',
-      title: 'Winning Ad Detector',
-      description: 'AI scan semua campaigns dan detect ads yang perform terbaik. Score 0–100. Alert terus bila ada winning ad.',
+      title_bm: 'Winning Ad Detector',
+      title_en: 'Winning Ad Detector',
+      description_bm: 'AI scan semua campaigns dan detect ads yang perform terbaik. Score 0–100. Alert terus bila ada winning ad.',
+      description_en: 'AI scans all campaigns and detects top-performing ads.',
     },
     {
       icon: 'Globe2',
-      title: 'Creative Fatigue Detector',
-      description: 'Detect CTR drop, frequency tinggi, dan CPM naik — tanda creative dah mati. Alert awal sebelum performance jatuh teruk.',
+      title_bm: 'Creative Fatigue Detector',
+      title_en: 'Creative Fatigue Detector',
+      description_bm: 'Detect CTR drop, frequency tinggi, dan CPM naik — tanda creative dah mati. Alert awal sebelum performance jatuh teruk.',
+      description_en: 'Detect CTR drop, high frequency, and rising CPM before performance dips.',
     },
     {
       icon: 'HandCoins',
-      title: 'Budget Tracker',
-      description: 'Monitor budget bulanan semua campaigns. Alert bila dah guna 80% serta pacing cadangan untuk baki hari.',
+      title_bm: 'Budget Tracker',
+      title_en: 'Budget Tracker',
+      description_bm: 'Monitor budget bulanan semua campaigns. Alert bila dah guna 80% serta pacing cadangan untuk baki hari.',
+      description_en: 'Monitor monthly budgets and alert when spend is near limits.',
     },
     {
       icon: 'Heart',
-      title: 'Campaign Health Score',
-      description: 'Setiap campaign dapat gred A–D berdasarkan ROAS, CTR, CPC, frequency dan conversions.',
+      title_bm: 'Campaign Health Score',
+      title_en: 'Campaign Health Score',
+      description_bm: 'Setiap campaign dapat gred A–D berdasarkan ROAS, CTR, CPC, frequency dan conversions.',
+      description_en: 'Each campaign receives an A-D grade based on ROAS, CTR, CPC, frequency, and conversions.',
     },
     {
       icon: 'BarChart3',
-      title: 'Laporan AI dalam BM',
-      description: 'Laporan harian dalam Bahasa Malaysia, mudah faham dan actionable terus ke Telegram.',
+      title_bm: 'Laporan AI dalam BM',
+      title_en: 'AI Reports in EN',
+      description_bm: 'Laporan harian dalam Bahasa Malaysia, mudah faham dan actionable terus ke Telegram.',
+      description_en: 'Daily reports in English that are easy to understand and immediately actionable via Telegram.',
     },
     {
       icon: 'Bot',
-      title: 'AI Recommendations',
-      description: 'AI bagi cadangan automasi yang jelas untuk setiap campaign.',
+      title_bm: 'AI Recommendations',
+      title_en: 'AI Recommendations',
+      description_bm: 'AI bagi cadangan automasi yang jelas untuk setiap campaign.',
+      description_en: 'Clear AI automation recommendations for every campaign.',
     },
   ];
 
@@ -66,8 +84,10 @@ export default async function AdminSettingsPage() {
     const fallback = uspFallback[index];
     return {
       icon: current?.icon?.trim() ? current.icon : fallback.icon,
-      title: current?.title?.trim() ? current.title : fallback.title,
-      description: current?.description?.trim() ? current.description : fallback.description,
+      title_bm: current?.title_bm?.trim() ? current.title_bm : fallback.title_bm,
+      title_en: current?.title_en?.trim() ? current.title_en : fallback.title_en,
+      description_bm: current?.description_bm?.trim() ? current.description_bm : fallback.description_bm,
+      description_en: current?.description_en?.trim() ? current.description_en : fallback.description_en,
     };
   });
 
@@ -175,6 +195,11 @@ export default async function AdminSettingsPage() {
                         <option value="Poppins, sans-serif">Poppins</option>
                         <option value="Montserrat, sans-serif">Montserrat</option>
                         <option value="system-ui, sans-serif">System UI</option>
+                        <option value="Instrument Serif">Instrument Serif</option>
+                        <option value="Cal Sans">Cal Sans</option>
+                        <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
+                        <option value="Geist Sans">Geist Sans</option>
+                        <option value="Bricolage Grotesque">Bricolage Grotesque</option>
                       </select>
                     </label>
                   </form>
@@ -199,22 +224,14 @@ export default async function AdminSettingsPage() {
                       Enable Pop-up
                     </label>
 
-                    <Tabs defaultValue="bm">
-                      <TabsList className="grid h-auto grid-cols-2 bg-slate-900 p-1 text-slate-300">
-                        <TabsTrigger value="bm" className="data-[state=active]:bg-slate-700">BM</TabsTrigger>
-                        <TabsTrigger value="en" className="data-[state=active]:bg-slate-700">EN</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="bm" className="mt-3 space-y-3">
-                        <input name="popup_headline_bm" defaultValue={settings.popup_headline_bm} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <textarea name="popup_description_bm" defaultValue={settings.popup_description_bm} rows={3} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <input name="popup_button_text_bm" defaultValue={settings.popup_button_text_bm} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                      </TabsContent>
-                      <TabsContent value="en" className="mt-3 space-y-3">
-                        <input name="popup_headline_en" defaultValue={settings.popup_headline_en} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <textarea name="popup_description_en" defaultValue={settings.popup_description_en} rows={3} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <input name="popup_button_text_en" defaultValue={settings.popup_button_text_en} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                      </TabsContent>
-                    </Tabs>
+                    <PopupLanguageFields
+                      popup_headline_bm={settings.popup_headline_bm}
+                      popup_headline_en={settings.popup_headline_en}
+                      popup_description_bm={settings.popup_description_bm}
+                      popup_description_en={settings.popup_description_en}
+                      popup_button_text_bm={settings.popup_button_text_bm}
+                      popup_button_text_en={settings.popup_button_text_en}
+                    />
 
                     <input name="popup_redirect_url" defaultValue={settings.popup_redirect_url} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
                     <div className="grid gap-4 md:grid-cols-2">
@@ -236,44 +253,28 @@ export default async function AdminSettingsPage() {
                 <AccordionContent className="pb-5">
                   <form action={saveContentModuleSettings} className="space-y-5">
                     <div className="flex justify-end"><ModuleSaveButton label={copy.save} /></div>
-                    <Tabs defaultValue="bm">
-                      <TabsList className="grid h-auto grid-cols-2 bg-slate-900 p-1 text-slate-300">
-                        <TabsTrigger value="bm" className="data-[state=active]:bg-slate-700">BM</TabsTrigger>
-                        <TabsTrigger value="en" className="data-[state=active]:bg-slate-700">EN</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="bm" className="mt-3 space-y-3">
-                        <input
-                          name="hero_headline_bm"
-                          defaultValue={settings.hero_headline_bm}
-                          placeholder="Contoh: Hentikan [Pembaziran] Bajet"
-                          className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
-                        />
-                        <textarea name="hero_subheadline_bm" defaultValue={settings.hero_subheadline_bm} rows={3} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <input name="alert_banner_text_bm" defaultValue={settings.alert_banner_text_bm} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <input name="feature_heading_bm" defaultValue={settings.feature_heading_bm} placeholder="Feature section heading (BM)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <input name="feature_subheading_bm" defaultValue={settings.feature_subheading_bm} placeholder="Feature section subheading (BM)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <input name="testimonials_badge_bm" defaultValue={settings.testimonials_badge_bm} placeholder="Testimonials badge (BM)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <input name="testimonials_title_bm" defaultValue={settings.testimonials_title_bm} placeholder="Testimonials title (BM)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <input name="pricing_section_title_bm" defaultValue={settings.pricing_section_title_bm} placeholder="Pricing section title (BM)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <input name="pricing_section_link_bm" defaultValue={settings.pricing_section_link_bm} placeholder="Pricing section link text (BM)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                      </TabsContent>
-                      <TabsContent value="en" className="mt-3 space-y-3">
-                        <input
-                          name="hero_headline_en"
-                          defaultValue={settings.hero_headline_en}
-                          placeholder="Example: Stop [Wasting] Ad Spend"
-                          className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
-                        />
-                        <textarea name="hero_subheadline_en" defaultValue={settings.hero_subheadline_en} rows={3} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <input name="alert_banner_text_en" defaultValue={settings.alert_banner_text_en} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <input name="feature_heading_en" defaultValue={settings.feature_heading_en} placeholder="Feature section heading (EN)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <input name="feature_subheading_en" defaultValue={settings.feature_subheading_en} placeholder="Feature section subheading (EN)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <input name="testimonials_badge_en" defaultValue={settings.testimonials_badge_en} placeholder="Testimonials badge (EN)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <input name="testimonials_title_en" defaultValue={settings.testimonials_title_en} placeholder="Testimonials title (EN)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <input name="pricing_section_title_en" defaultValue={settings.pricing_section_title_en} placeholder="Pricing section title (EN)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <input name="pricing_section_link_en" defaultValue={settings.pricing_section_link_en} placeholder="Pricing section link text (EN)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                      </TabsContent>
-                    </Tabs>
+                    <ContentLanguageFields
+                      hero_headline_bm={settings.hero_headline_bm}
+                      hero_headline_en={settings.hero_headline_en}
+                      hero_subheadline_bm={settings.hero_subheadline_bm}
+                      hero_subheadline_en={settings.hero_subheadline_en}
+                      alert_banner_text_bm={settings.alert_banner_text_bm}
+                      alert_banner_text_en={settings.alert_banner_text_en}
+                      feature_heading_bm={settings.feature_heading_bm}
+                      feature_heading_en={settings.feature_heading_en}
+                      feature_subheading_bm={settings.feature_subheading_bm}
+                      feature_subheading_en={settings.feature_subheading_en}
+                      testimonials_badge_bm={settings.testimonials_badge_bm}
+                      testimonials_badge_en={settings.testimonials_badge_en}
+                      testimonials_title_bm={settings.testimonials_title_bm}
+                      testimonials_title_en={settings.testimonials_title_en}
+                      pricing_section_title_bm={settings.pricing_section_title_bm}
+                      pricing_section_title_en={settings.pricing_section_title_en}
+                      pricing_section_link_bm={settings.pricing_section_link_bm}
+                      pricing_section_link_en={settings.pricing_section_link_en}
+                      ticker_items_bm={settings.ticker_items_bm}
+                      ticker_items_en={settings.ticker_items_en}
+                    />
 
                     <div className="space-y-1 rounded-md border border-slate-700/70 bg-slate-950/50 p-3 text-xs text-slate-300">
                       <p className="font-semibold text-emerald-200">Tip Format Teks (Landing Preview)</p>
@@ -297,7 +298,6 @@ export default async function AdminSettingsPage() {
                       <input name="ticker_speed_seconds" type="number" defaultValue={settings.ticker_speed_seconds} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
                     </div>
 
-                    <SettingsDynamicFields tickerItemsBm={settings.ticker_items_bm} tickerItemsEn={settings.ticker_items_en} faqs={faqs} showTicker showFaq={false} />
                   </form>
                 </AccordionContent>
               </AccordionItem>
@@ -315,39 +315,9 @@ export default async function AdminSettingsPage() {
                     <div className="flex justify-end"><ModuleSaveButton label={copy.save} /></div>
                     <div className="rounded-md border border-emerald-400/20 bg-slate-900/40 p-3 text-xs text-slate-300">
                       <p className="font-semibold text-emerald-200">Susunan ikut landing page (Card 1 → Card 6)</p>
-                      <p className="mt-1">Tip: isi semua 6 card untuk sama seperti paparan landing. Icon cadangan: Trophy, Globe2, HandCoins, Heart, BarChart3, Bot.</p>
+                      <p className="mt-1">Tip: isi BM + EN untuk semua 6 card. Landing akan ikut toggle bahasa tanpa campur. Icon cadangan: Trophy, Globe2, HandCoins, Heart, BarChart3, Bot.</p>
                     </div>
-                    <div className="space-y-3">
-                      {Array.from({ length: 6 }).map((_, index) => {
-                        const item = uspEditorSource[index];
-                        const i = index + 1;
-                        return (
-                          <div key={`usp-${i}`} className="rounded-md border border-slate-700/80 bg-slate-950/60 p-3">
-                            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-200">USP Card {i}</p>
-                            <div className="grid gap-3 md:grid-cols-[160px_1fr_2fr]">
-                              <input
-                                name={`usp_icon_${i}`}
-                                defaultValue={item?.icon ?? ''}
-                                placeholder="Icon (e.g. Trophy)"
-                                className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
-                              />
-                              <input
-                                name={`usp_title_${i}`}
-                                defaultValue={item?.title ?? ''}
-                                placeholder={`USP title ${i}`}
-                                className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
-                              />
-                              <input
-                                name={`usp_description_${i}`}
-                                defaultValue={item?.description ?? ''}
-                                placeholder="USP description"
-                                className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                    <UspLanguageFields items={uspEditorSource} />
                   </form>
                 </AccordionContent>
               </AccordionItem>
@@ -401,28 +371,20 @@ export default async function AdminSettingsPage() {
                       <input name="pricing_agency_price" type="number" defaultValue={settings.pricing_agency_price} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
                     </div>
 
-                    <Tabs defaultValue="bm">
-                      <TabsList className="grid h-auto grid-cols-2 bg-slate-900 p-1 text-slate-300">
-                        <TabsTrigger value="bm" className="data-[state=active]:bg-slate-700">BM</TabsTrigger>
-                        <TabsTrigger value="en" className="data-[state=active]:bg-slate-700">EN</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="bm" className="mt-3 grid gap-3 md:grid-cols-3">
-                        <input name="starter_name_bm" defaultValue={settings.starter_name_bm} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <input name="pro_name_bm" defaultValue={settings.pro_name_bm} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <input name="agency_name_bm" defaultValue={settings.agency_name_bm} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <textarea name="starter_desc_bm" defaultValue={settings.starter_desc_bm} rows={2} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <textarea name="pro_desc_bm" defaultValue={settings.pro_desc_bm} rows={2} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <textarea name="agency_desc_bm" defaultValue={settings.agency_desc_bm} rows={2} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                      </TabsContent>
-                      <TabsContent value="en" className="mt-3 grid gap-3 md:grid-cols-3">
-                        <input name="starter_name_en" defaultValue={settings.starter_name_en} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <input name="pro_name_en" defaultValue={settings.pro_name_en} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <input name="agency_name_en" defaultValue={settings.agency_name_en} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <textarea name="starter_desc_en" defaultValue={settings.starter_desc_en} rows={2} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <textarea name="pro_desc_en" defaultValue={settings.pro_desc_en} rows={2} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <textarea name="agency_desc_en" defaultValue={settings.agency_desc_en} rows={2} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                      </TabsContent>
-                    </Tabs>
+                    <PricingLanguageFields
+                      starter_name_bm={settings.starter_name_bm}
+                      starter_name_en={settings.starter_name_en}
+                      pro_name_bm={settings.pro_name_bm}
+                      pro_name_en={settings.pro_name_en}
+                      agency_name_bm={settings.agency_name_bm}
+                      agency_name_en={settings.agency_name_en}
+                      starter_desc_bm={settings.starter_desc_bm}
+                      starter_desc_en={settings.starter_desc_en}
+                      pro_desc_bm={settings.pro_desc_bm}
+                      pro_desc_en={settings.pro_desc_en}
+                      agency_desc_bm={settings.agency_desc_bm}
+                      agency_desc_en={settings.agency_desc_en}
+                    />
 
                     <div className="grid gap-4 md:grid-cols-4">
                       <input name="starter_bonus_accounts" type="number" defaultValue={settings.starter_bonus_accounts} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
@@ -481,25 +443,14 @@ export default async function AdminSettingsPage() {
                 <AccordionContent className="pb-5">
                   <form action={saveFaqModuleSettings} className="space-y-5">
                     <div className="flex justify-end"><ModuleSaveButton label={copy.save} /></div>
-                    <Tabs defaultValue="starter">
-                      <TabsList className="grid h-auto grid-cols-3 bg-slate-900 p-1 text-slate-300">
-                        <TabsTrigger value="starter" className="data-[state=active]:bg-slate-700">Starter</TabsTrigger>
-                        <TabsTrigger value="pro" className="data-[state=active]:bg-slate-700">Pro</TabsTrigger>
-                        <TabsTrigger value="agency" className="data-[state=active]:bg-slate-700">Agency</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="starter" className="mt-3 grid gap-3 md:grid-cols-2">
-                        <textarea name="pricing_starter_benefits_bm" defaultValue={settings.pricing_starter_benefits_bm.join('\n')} rows={7} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <textarea name="pricing_starter_benefits_en" defaultValue={settings.pricing_starter_benefits_en.join('\n')} rows={7} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                      </TabsContent>
-                      <TabsContent value="pro" className="mt-3 grid gap-3 md:grid-cols-2">
-                        <textarea name="pricing_pro_benefits_bm" defaultValue={settings.pricing_pro_benefits_bm.join('\n')} rows={7} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <textarea name="pricing_pro_benefits_en" defaultValue={settings.pricing_pro_benefits_en.join('\n')} rows={7} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                      </TabsContent>
-                      <TabsContent value="agency" className="mt-3 grid gap-3 md:grid-cols-2">
-                        <textarea name="pricing_agency_benefits_bm" defaultValue={settings.pricing_agency_benefits_bm.join('\n')} rows={7} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                        <textarea name="pricing_agency_benefits_en" defaultValue={settings.pricing_agency_benefits_en.join('\n')} rows={7} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
-                      </TabsContent>
-                    </Tabs>
+                    <PricingBenefitsLanguageFields
+                      pricing_starter_benefits_bm={settings.pricing_starter_benefits_bm}
+                      pricing_starter_benefits_en={settings.pricing_starter_benefits_en}
+                      pricing_pro_benefits_bm={settings.pricing_pro_benefits_bm}
+                      pricing_pro_benefits_en={settings.pricing_pro_benefits_en}
+                      pricing_agency_benefits_bm={settings.pricing_agency_benefits_bm}
+                      pricing_agency_benefits_en={settings.pricing_agency_benefits_en}
+                    />
                     <SettingsDynamicFields tickerItemsBm={settings.ticker_items_bm} tickerItemsEn={settings.ticker_items_en} faqs={faqs} showTicker={false} showFaq faqAccordion />
                     <textarea name="faqs_payload" defaultValue={faqsPayload} className="sr-only" readOnly />
                   </form>

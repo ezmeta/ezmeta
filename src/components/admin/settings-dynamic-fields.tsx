@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -33,6 +33,19 @@ export function SettingsDynamicFields({ tickerItemsBm, tickerItemsEn, faqs, show
   const [enItems, setEnItems] = useState<string[]>(tickerItemsEn.length > 0 ? tickerItemsEn : ['']);
   const [faqRows, setFaqRows] = useState<FaqSeed[]>(() => normalizeFaqs(faqs));
   const [visibleFaqRows, setVisibleFaqRows] = useState<number>(() => Math.min(Math.max(faqs.length || 3, 1), 10));
+
+  useEffect(() => {
+    setBmItems(tickerItemsBm.length > 0 ? tickerItemsBm : ['']);
+  }, [tickerItemsBm]);
+
+  useEffect(() => {
+    setEnItems(tickerItemsEn.length > 0 ? tickerItemsEn : ['']);
+  }, [tickerItemsEn]);
+
+  useEffect(() => {
+    setFaqRows(normalizeFaqs(faqs));
+    setVisibleFaqRows(Math.min(Math.max(faqs.length || 3, 1), 10));
+  }, [faqs]);
 
   const bmJoined = useMemo(() => bmItems.map((item) => item.trim()).filter(Boolean).join('\n'), [bmItems]);
   const enJoined = useMemo(() => enItems.map((item) => item.trim()).filter(Boolean).join('\n'), [enItems]);
