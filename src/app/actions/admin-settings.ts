@@ -1626,14 +1626,24 @@ async function getCurrentSiteSettingsRowMap(): Promise<SiteSettingsRowMap> {
     },
   });
 
-  const timeout = timeoutController(4000);
-  const { data } = await (supabase as any).from('site_settings').select('key, value').abortSignal(timeout.signal);
-  timeout.clear();
-
   const map = new Map<string, any>();
-  for (const row of (data ?? []) as Array<{ key: string; value: any }>) {
-    map.set(row.key, row.value);
+  try {
+    const timeout = timeoutController(10000);
+    const { data, error } = await (supabase as any).from('site_settings').select('key, value').abortSignal(timeout.signal);
+    timeout.clear();
+
+    if (error) {
+      console.warn('Unable to read current site settings, continuing with defaults:', error);
+      return map;
+    }
+
+    for (const row of (data ?? []) as Array<{ key: string; value: any }>) {
+      map.set(row.key, row.value);
+    }
+  } catch (error) {
+    console.warn('Current site settings snapshot failed, continuing with defaults:', error);
   }
+
   return map;
 }
 
