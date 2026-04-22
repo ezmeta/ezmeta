@@ -1,7 +1,23 @@
-import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { saveSiteSettings, getSiteSettings, getFaqs, unlockAdmin } from '@/app/actions/admin-settings';
+import {
+  getSiteSettings,
+  getFaqs,
+  unlockAdmin,
+  saveGlobalStylesModuleSettings,
+  savePricingModuleSettings,
+  saveContentModuleSettings,
+  saveUspModuleSettings,
+  saveTestimonialsModuleSettings,
+  saveFaqModuleSettings,
+  savePopupModuleSettings,
+} from '@/app/actions/admin-settings';
 import { SaveStatusToast } from '@/components/admin/save-status-toast';
+import { SettingsDynamicFields } from '@/components/admin/settings-dynamic-fields';
+import { ModuleSaveButton } from '@/components/admin/module-save-button';
+import { AdminSidebar } from '@/components/admin/admin-sidebar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,8 +25,52 @@ export default async function AdminSettingsPage() {
   const cookieStore = await cookies();
   const isUnlocked = cookieStore.get('admin_auth')?.value === 'true';
   const lang = cookieStore.get('ez_lang')?.value === 'en' ? 'en' : 'bm';
-  const settings = await getSiteSettings();
-  const faqs = await getFaqs();
+  const [settings, faqs] = await Promise.all([getSiteSettings(), getFaqs()]);
+
+  const uspFallback = [
+    {
+      icon: 'Trophy',
+      title: 'Winning Ad Detector',
+      description: 'AI scan semua campaigns dan detect ads yang perform terbaik. Score 0–100. Alert terus bila ada winning ad.',
+    },
+    {
+      icon: 'Globe2',
+      title: 'Creative Fatigue Detector',
+      description: 'Detect CTR drop, frequency tinggi, dan CPM naik — tanda creative dah mati. Alert awal sebelum performance jatuh teruk.',
+    },
+    {
+      icon: 'HandCoins',
+      title: 'Budget Tracker',
+      description: 'Monitor budget bulanan semua campaigns. Alert bila dah guna 80% serta pacing cadangan untuk baki hari.',
+    },
+    {
+      icon: 'Heart',
+      title: 'Campaign Health Score',
+      description: 'Setiap campaign dapat gred A–D berdasarkan ROAS, CTR, CPC, frequency dan conversions.',
+    },
+    {
+      icon: 'BarChart3',
+      title: 'Laporan AI dalam BM',
+      description: 'Laporan harian dalam Bahasa Malaysia, mudah faham dan actionable terus ke Telegram.',
+    },
+    {
+      icon: 'Bot',
+      title: 'AI Recommendations',
+      description: 'AI bagi cadangan automasi yang jelas untuk setiap campaign.',
+    },
+  ];
+
+  const rawUsp = settings.usp_features_payload ?? [];
+  const uspEditorSource = Array.from({ length: 6 }).map((_, index) => {
+    const current = rawUsp[index];
+    const fallback = uspFallback[index];
+    return {
+      icon: current?.icon?.trim() ? current.icon : fallback.icon,
+      title: current?.title?.trim() ? current.title : fallback.title,
+      description: current?.description?.trim() ? current.description : fallback.description,
+    };
+  });
+
   const faqsPayload = faqs
     .sort((a, b) => a.sort_order - b.sort_order)
     .map((item) => `${item.question_bm}||${item.answer_bm}||${item.question_en}||${item.answer_en}`)
@@ -18,28 +78,18 @@ export default async function AdminSettingsPage() {
 
   const copy = {
     bm: {
-      adminCms: 'Admin CMS',
-      dashboardStats: 'Stat Dashboard',
-      siteSettings: 'Tetapan Laman',
-      userManagement: 'Pengurusan Pengguna',
-      feedbackLogs: 'Log Maklum Balas',
-      title: 'Tetapan Laman',
-      subtitle: 'Kemas kini kandungan landing page dan harga melalui CMS.',
+      title: 'Tetapan Laman (CMS)',
+      subtitle: 'Modul CMS kini collapsible untuk kurangkan scrolling.',
       adminPassword: 'Kata Laluan Admin',
       unlock: 'Buka Akses Admin',
-      save: 'Simpan',
+      save: 'Simpan Modul',
     },
     en: {
-      adminCms: 'Admin CMS',
-      dashboardStats: 'Dashboard Stats',
-      siteSettings: 'Site Settings',
-      userManagement: 'User Management',
-      feedbackLogs: 'Feedback Logs',
-      title: 'Site Settings',
-      subtitle: 'Update landing-page content and pricing labels for the CMS.',
+      title: 'Site Settings (CMS)',
+      subtitle: 'CMS modules are collapsible to reduce vertical fatigue.',
       adminPassword: 'Admin Password',
       unlock: 'Unlock Admin',
-      save: 'Save',
+      save: 'Save Module',
     },
   }[lang];
 
@@ -47,41 +97,18 @@ export default async function AdminSettingsPage() {
     <div className="cyber-grid min-h-screen bg-slate-950 text-white">
       <SaveStatusToast />
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 p-6 md:grid-cols-[280px_1fr]">
-        <aside className="cyber-panel h-fit p-4 md:sticky md:top-6">
-          <h2 className="mb-4 text-lg font-semibold text-white">{copy.adminCms}</h2>
-          <nav className="space-y-2 text-sm">
-            <Link href="/admin" className="block cursor-pointer rounded-md px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white active:opacity-80">
-              {copy.dashboardStats}
-            </Link>
-            <Link href="/admin/settings" className="block cursor-pointer rounded-md bg-slate-800 px-3 py-2 text-white">
-              {copy.siteSettings}
-            </Link>
-            <Link href="/admin/users" className="block cursor-pointer rounded-md px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white active:opacity-80">
-              {copy.userManagement}
-            </Link>
-            <Link href="/admin/feedback" className="block cursor-pointer rounded-md px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white active:opacity-80">
-              {copy.feedbackLogs}
-            </Link>
-          </nav>
-
-          <div className="mt-6 rounded-lg border border-emerald-400/20 bg-slate-900/60 p-3 text-xs text-slate-300">
-            <p className="font-semibold uppercase tracking-[0.14em] text-emerald-200">Struktur Tapak</p>
-            <ul className="mt-2 space-y-1">
-              <li>
-                <a href="#module-pricing" className="hover:text-emerald-200">01 · Pricing & Plans</a>
-              </li>
-              <li>
-                <a href="#module-content" className="hover:text-emerald-200">02 · Headline & Hero</a>
-              </li>
-              <li>
-                <a href="#module-faq" className="hover:text-emerald-200">03 · Benefits & FAQ</a>
-              </li>
-              <li>
-                <a href="#module-popup" className="hover:text-emerald-200">04 · Marketing Pop-up</a>
-              </li>
-            </ul>
-          </div>
-        </aside>
+        <AdminSidebar
+          active="settings"
+          quickNav={[
+            { href: '#module-global-styles', label: '01 · Global Styles', accordionValue: 'module-1' },
+            { href: '#module-popup', label: '02 · Marketing Pop-up', accordionValue: 'module-2' },
+            { href: '#module-content', label: '03 · Headline & Ticker', accordionValue: 'module-3' },
+            { href: '#module-usp', label: '04 · USP EZ Meta Features', accordionValue: 'module-4' },
+            { href: '#module-testimonials', label: '05 · Testimonials', accordionValue: 'module-5' },
+            { href: '#module-pricing', label: '06 · Pricing & Plans', accordionValue: 'module-6' },
+            { href: '#module-faq', label: '07 · Benefits & FAQ', accordionValue: 'module-7' },
+          ]}
+        />
 
         <main className="cyber-panel p-6">
           <h1 className="mb-1 font-display text-3xl text-white">{copy.title}</h1>
@@ -102,397 +129,388 @@ export default async function AdminSettingsPage() {
                   placeholder="Enter admin password to unlock"
                 />
               </div>
-              <button
-                type="submit"
-                className="cursor-pointer rounded-md bg-emerald-500 px-4 py-2 font-medium text-slate-950 transition-colors hover:bg-emerald-400 active:scale-[0.98]"
-              >
+              <button type="submit" className="rounded-md bg-emerald-500 px-4 py-2 font-medium text-slate-950 hover:bg-emerald-400">
                 {copy.unlock}
               </button>
             </form>
           ) : (
+            <Accordion type="single" collapsible className="space-y-4">
+              <AccordionItem id="module-global-styles" value="module-1" className="overflow-hidden rounded-xl border border-emerald-400/20 bg-slate-950/60 px-5">
+                <AccordionTrigger className="py-4 hover:no-underline">
+                  <div className="text-left">
+                    <p className="text-xs uppercase tracking-[0.16em] text-emerald-200">Module 01</p>
+                    <h3 className="mt-1 text-lg font-semibold text-white">Global Styles</h3>
+                    <p className="text-xs text-slate-400">Global colors and font family for landing UI.</p>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-5">
+                  <form action={saveGlobalStylesModuleSettings} className="space-y-5">
+                    <div className="flex justify-end">
+                      <ModuleSaveButton label={copy.save} />
+                    </div>
 
-          <form action={saveSiteSettings} className="space-y-6">
-            <section id="module-pricing" className="scroll-mt-24 rounded-xl border border-emerald-400/20 bg-slate-950/60 p-5">
-              <p className="text-xs uppercase tracking-[0.16em] text-emerald-200">Module 01</p>
-              <h3 className="mt-1 text-xl font-semibold text-white">Pricing & Plan Manager</h3>
-              <p className="mt-1 text-sm text-slate-400">Edit monthly pricing, plan labels, descriptions, account offers, and WhatsApp endpoint.</p>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <label className="space-y-2 text-sm text-slate-300">
+                        <span>Primary Theme Color</span>
+                        <input name="primary_theme_color" type="color" defaultValue={settings.primary_theme_color} className="h-10 w-full rounded-md border border-slate-700 bg-slate-950 p-1" />
+                      </label>
+                      <label className="space-y-2 text-sm text-slate-300">
+                        <span>Highlight Color</span>
+                        <input name="highlight_color" type="color" defaultValue={settings.highlight_color} className="h-10 w-full rounded-md border border-slate-700 bg-slate-950 p-1" />
+                      </label>
+                      <label className="space-y-2 text-sm text-slate-300">
+                        <span>Button Background</span>
+                        <input name="button_bg_color" type="color" defaultValue={settings.button_bg_color} className="h-10 w-full rounded-md border border-slate-700 bg-slate-950 p-1" />
+                      </label>
+                      <label className="space-y-2 text-sm text-slate-300">
+                        <span>Button Text Color</span>
+                        <input name="button_text_color" type="color" defaultValue={settings.button_text_color} className="h-10 w-full rounded-md border border-slate-700 bg-slate-950 p-1" />
+                      </label>
+                    </div>
 
-              <div className="mt-5 grid gap-5 md:grid-cols-3">
-                <div>
-                  <label htmlFor="pricing_starter_price" className="mb-1 block text-sm font-medium text-slate-200">
-                    Starter Price (RM)
-                  </label>
-                  <input
-                    id="pricing_starter_price"
-                    name="pricing_starter_price"
-                    type="number"
-                    min={0}
-                    step="1"
-                    defaultValue={settings.pricing_starter_price}
-                    className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="pricing_pro_price" className="mb-1 block text-sm font-medium text-slate-200">
-                    Pro Price (RM)
-                  </label>
-                  <input
-                    id="pricing_pro_price"
-                    name="pricing_pro_price"
-                    type="number"
-                    min={0}
-                    step="1"
-                    defaultValue={settings.pricing_pro_price}
-                    className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="pricing_agency_price" className="mb-1 block text-sm font-medium text-slate-200">
-                    Agency Price (RM)
-                  </label>
-                  <input
-                    id="pricing_agency_price"
-                    name="pricing_agency_price"
-                    type="number"
-                    min={0}
-                    step="1"
-                    defaultValue={settings.pricing_agency_price}
-                    className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-5 md:grid-cols-2">
-                <div>
-                  <label htmlFor="starter_name_bm" className="mb-1 block text-sm font-medium text-slate-200">Plan Name Starter (BM)</label>
-                  <input id="starter_name_bm" name="starter_name_bm" defaultValue={settings.starter_name_bm} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-                <div>
-                  <label htmlFor="starter_name_en" className="mb-1 block text-sm font-medium text-slate-200">Plan Name Starter (EN)</label>
-                  <input id="starter_name_en" name="starter_name_en" defaultValue={settings.starter_name_en} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-              </div>
-              <div className="mt-4 grid gap-5 md:grid-cols-2">
-                <div>
-                  <label htmlFor="pro_name_bm" className="mb-1 block text-sm font-medium text-slate-200">Plan Name Pro (BM)</label>
-                  <input id="pro_name_bm" name="pro_name_bm" defaultValue={settings.pro_name_bm} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-                <div>
-                  <label htmlFor="pro_name_en" className="mb-1 block text-sm font-medium text-slate-200">Plan Name Pro (EN)</label>
-                  <input id="pro_name_en" name="pro_name_en" defaultValue={settings.pro_name_en} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-              </div>
-              <div className="mt-4 grid gap-5 md:grid-cols-2">
-                <div>
-                  <label htmlFor="agency_name_bm" className="mb-1 block text-sm font-medium text-slate-200">Plan Name Agency (BM)</label>
-                  <input id="agency_name_bm" name="agency_name_bm" defaultValue={settings.agency_name_bm} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-                <div>
-                  <label htmlFor="agency_name_en" className="mb-1 block text-sm font-medium text-slate-200">Plan Name Agency (EN)</label>
-                  <input id="agency_name_en" name="agency_name_en" defaultValue={settings.agency_name_en} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-5 md:grid-cols-2">
-                <div>
-                  <label htmlFor="starter_desc_bm" className="mb-1 block text-sm font-medium text-slate-200">Starter Description (BM)</label>
-                  <textarea id="starter_desc_bm" name="starter_desc_bm" rows={2} defaultValue={settings.starter_desc_bm} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-                <div>
-                  <label htmlFor="starter_desc_en" className="mb-1 block text-sm font-medium text-slate-200">Starter Description (EN)</label>
-                  <textarea id="starter_desc_en" name="starter_desc_en" rows={2} defaultValue={settings.starter_desc_en} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-                <div>
-                  <label htmlFor="pro_desc_bm" className="mb-1 block text-sm font-medium text-slate-200">Pro Description (BM)</label>
-                  <textarea id="pro_desc_bm" name="pro_desc_bm" rows={2} defaultValue={settings.pro_desc_bm} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-                <div>
-                  <label htmlFor="pro_desc_en" className="mb-1 block text-sm font-medium text-slate-200">Pro Description (EN)</label>
-                  <textarea id="pro_desc_en" name="pro_desc_en" rows={2} defaultValue={settings.pro_desc_en} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-                <div>
-                  <label htmlFor="agency_desc_bm" className="mb-1 block text-sm font-medium text-slate-200">Agency Description (BM)</label>
-                  <textarea id="agency_desc_bm" name="agency_desc_bm" rows={2} defaultValue={settings.agency_desc_bm} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-                <div>
-                  <label htmlFor="agency_desc_en" className="mb-1 block text-sm font-medium text-slate-200">Agency Description (EN)</label>
-                  <textarea id="agency_desc_en" name="agency_desc_en" rows={2} defaultValue={settings.agency_desc_en} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-5 md:grid-cols-4">
-                <div>
-                  <label htmlFor="starter_bonus_accounts" className="mb-1 block text-sm font-medium text-slate-200">Starter Bonus Accounts</label>
-                  <input id="starter_bonus_accounts" name="starter_bonus_accounts" type="number" min={0} step="1" defaultValue={settings.starter_bonus_accounts} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-                <div>
-                  <label htmlFor="pro_bonus_accounts" className="mb-1 block text-sm font-medium text-slate-200">Pro Bonus Accounts</label>
-                  <input id="pro_bonus_accounts" name="pro_bonus_accounts" type="number" min={0} step="1" defaultValue={settings.pro_bonus_accounts} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-                <div>
-                  <label htmlFor="agency_bonus_accounts" className="mb-1 block text-sm font-medium text-slate-200">Agency Bonus Accounts</label>
-                  <input id="agency_bonus_accounts" name="agency_bonus_accounts" type="number" min={0} step="1" defaultValue={settings.agency_bonus_accounts} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-                <div>
-                  <label htmlFor="contact_whatsapp" className="mb-1 block text-sm font-medium text-slate-200">Contact WhatsApp</label>
-                  <input id="contact_whatsapp" name="contact_whatsapp" defaultValue={settings.contact_whatsapp} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-              </div>
-
-              <div className="mt-6 rounded-lg border border-slate-700/80 bg-slate-900/50 p-4">
-                <p className="text-sm font-semibold text-slate-100">Feature Toggles Scaffold</p>
-                <p className="mt-1 text-xs text-slate-400">UI scaffold for next phase. Toggle persistence will be wired in a dedicated module update.</p>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {[
-                    'Telegram Alerts',
-                    'Winning Ad Detector',
-                    'Creative Fatigue Detector',
-                    'Budget Tracker',
-                    'Campaign Health Score',
-                    'AI Copywriter BM',
-                  ].map((feature) => (
-                    <label key={feature} className="flex items-center gap-2 rounded-md border border-slate-700/70 bg-slate-950/70 px-3 py-2 text-xs text-slate-300">
-                      <input type="checkbox" disabled className="h-3.5 w-3.5 accent-emerald-400" />
-                      <span>{feature}</span>
+                    <label className="block space-y-2 text-sm text-slate-300">
+                      <span>Font Family</span>
+                      <select name="font_family" defaultValue={settings.font_family} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2">
+                        <option value="Inter, sans-serif">Inter</option>
+                        <option value="Poppins, sans-serif">Poppins</option>
+                        <option value="Montserrat, sans-serif">Montserrat</option>
+                        <option value="system-ui, sans-serif">System UI</option>
+                      </select>
                     </label>
-                  ))}
-                </div>
-              </div>
-            </section>
+                  </form>
+                </AccordionContent>
+              </AccordionItem>
 
-            <section id="module-content" className="scroll-mt-24 rounded-xl border border-emerald-400/20 bg-slate-950/60 p-5">
-              <p className="text-xs uppercase tracking-[0.16em] text-emerald-200">Module 02</p>
-              <h3 className="mt-1 text-xl font-semibold text-white">Site Content Manager · Headline Editor</h3>
-              <p className="mt-1 text-sm text-slate-400">Update hero headline and subheadline for BM/EN with instant save persistence.</p>
+              <AccordionItem id="module-popup" value="module-2" className="overflow-hidden rounded-xl border border-emerald-400/20 bg-slate-950/60 px-5">
+                <AccordionTrigger className="py-4 hover:no-underline">
+                  <div className="text-left">
+                    <p className="text-xs uppercase tracking-[0.16em] text-emerald-200">Module 02</p>
+                    <h3 className="mt-1 text-lg font-semibold">Marketing Pop-up</h3>
+                    <p className="text-xs text-slate-400">Popup copy, CTA and schedule window.</p>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-5">
+                  <form action={savePopupModuleSettings} className="space-y-5">
+                    <div className="flex justify-end"><ModuleSaveButton label={copy.save} /></div>
 
-              <div className="mt-5 grid gap-5 md:grid-cols-2">
-              <div>
-                <label htmlFor="hero_headline_bm" className="mb-1 block text-sm font-medium text-slate-200">
-                  Hero Headline (BM)
-                </label>
-                <input
-                  id="hero_headline_bm"
-                  name="hero_headline_bm"
-                  defaultValue={settings.hero_headline_bm}
-                  className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500"
-                />
-              </div>
+                    <label className="flex items-center gap-3 rounded-md border border-slate-700 bg-slate-950 px-3 py-2">
+                      <input type="hidden" name="popup_enabled_present" value="1" />
+                      <input name="popup_enabled" type="checkbox" defaultChecked={settings.popup_enabled} className="h-4 w-4" />
+                      Enable Pop-up
+                    </label>
 
-              <div>
-                <label htmlFor="hero_headline_en" className="mb-1 block text-sm font-medium text-slate-200">
-                  Hero Headline (EN)
-                </label>
-                <input
-                  id="hero_headline_en"
-                  name="hero_headline_en"
-                  defaultValue={settings.hero_headline_en}
-                  className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500"
-                />
-              </div>
-              </div>
+                    <Tabs defaultValue="bm">
+                      <TabsList className="grid h-auto grid-cols-2 bg-slate-900 p-1 text-slate-300">
+                        <TabsTrigger value="bm" className="data-[state=active]:bg-slate-700">BM</TabsTrigger>
+                        <TabsTrigger value="en" className="data-[state=active]:bg-slate-700">EN</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="bm" className="mt-3 space-y-3">
+                        <input name="popup_headline_bm" defaultValue={settings.popup_headline_bm} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <textarea name="popup_description_bm" defaultValue={settings.popup_description_bm} rows={3} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <input name="popup_button_text_bm" defaultValue={settings.popup_button_text_bm} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                      </TabsContent>
+                      <TabsContent value="en" className="mt-3 space-y-3">
+                        <input name="popup_headline_en" defaultValue={settings.popup_headline_en} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <textarea name="popup_description_en" defaultValue={settings.popup_description_en} rows={3} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <input name="popup_button_text_en" defaultValue={settings.popup_button_text_en} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                      </TabsContent>
+                    </Tabs>
 
-              <div className="mt-5 grid gap-5 md:grid-cols-2">
-              <div>
-                <label htmlFor="hero_subheadline_bm" className="mb-1 block text-sm font-medium text-slate-200">
-                  Hero Subheadline (BM)
-                </label>
-                <textarea
-                  id="hero_subheadline_bm"
-                  name="hero_subheadline_bm"
-                  defaultValue={settings.hero_subheadline_bm}
-                  rows={3}
-                  className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500"
-                />
-              </div>
+                    <input name="popup_redirect_url" defaultValue={settings.popup_redirect_url} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <DateTimePicker id="popup_start_date" name="popup_start_date" defaultIsoValue={settings.popup_start_date} placeholder="Start date/time" />
+                      <DateTimePicker id="popup_end_date" name="popup_end_date" defaultIsoValue={settings.popup_end_date} placeholder="End date/time" />
+                    </div>
+                  </form>
+                </AccordionContent>
+              </AccordionItem>
 
-              <div>
-                <label htmlFor="hero_subheadline_en" className="mb-1 block text-sm font-medium text-slate-200">
-                  Hero Subheadline (EN)
-                </label>
-                <textarea
-                  id="hero_subheadline_en"
-                  name="hero_subheadline_en"
-                  defaultValue={settings.hero_subheadline_en}
-                  rows={3}
-                  className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500"
-                />
-              </div>
-              </div>
+              <AccordionItem id="module-content" value="module-3" className="overflow-hidden rounded-xl border border-emerald-400/20 bg-slate-950/60 px-5">
+                <AccordionTrigger className="py-4 hover:no-underline">
+                  <div className="text-left">
+                    <p className="text-xs uppercase tracking-[0.16em] text-emerald-200">Module 03</p>
+                    <h3 className="mt-1 text-lg font-semibold">Headline & Ticker</h3>
+                    <p className="text-xs text-slate-400">Hero copy, alert banner, ticker switch and speed.</p>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-5">
+                  <form action={saveContentModuleSettings} className="space-y-5">
+                    <div className="flex justify-end"><ModuleSaveButton label={copy.save} /></div>
+                    <Tabs defaultValue="bm">
+                      <TabsList className="grid h-auto grid-cols-2 bg-slate-900 p-1 text-slate-300">
+                        <TabsTrigger value="bm" className="data-[state=active]:bg-slate-700">BM</TabsTrigger>
+                        <TabsTrigger value="en" className="data-[state=active]:bg-slate-700">EN</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="bm" className="mt-3 space-y-3">
+                        <input
+                          name="hero_headline_bm"
+                          defaultValue={settings.hero_headline_bm}
+                          placeholder="Contoh: Hentikan [Pembaziran] Bajet"
+                          className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
+                        />
+                        <textarea name="hero_subheadline_bm" defaultValue={settings.hero_subheadline_bm} rows={3} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <input name="alert_banner_text_bm" defaultValue={settings.alert_banner_text_bm} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <input name="feature_heading_bm" defaultValue={settings.feature_heading_bm} placeholder="Feature section heading (BM)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <input name="feature_subheading_bm" defaultValue={settings.feature_subheading_bm} placeholder="Feature section subheading (BM)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <input name="testimonials_badge_bm" defaultValue={settings.testimonials_badge_bm} placeholder="Testimonials badge (BM)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <input name="testimonials_title_bm" defaultValue={settings.testimonials_title_bm} placeholder="Testimonials title (BM)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <input name="pricing_section_title_bm" defaultValue={settings.pricing_section_title_bm} placeholder="Pricing section title (BM)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <input name="pricing_section_link_bm" defaultValue={settings.pricing_section_link_bm} placeholder="Pricing section link text (BM)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                      </TabsContent>
+                      <TabsContent value="en" className="mt-3 space-y-3">
+                        <input
+                          name="hero_headline_en"
+                          defaultValue={settings.hero_headline_en}
+                          placeholder="Example: Stop [Wasting] Ad Spend"
+                          className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
+                        />
+                        <textarea name="hero_subheadline_en" defaultValue={settings.hero_subheadline_en} rows={3} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <input name="alert_banner_text_en" defaultValue={settings.alert_banner_text_en} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <input name="feature_heading_en" defaultValue={settings.feature_heading_en} placeholder="Feature section heading (EN)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <input name="feature_subheading_en" defaultValue={settings.feature_subheading_en} placeholder="Feature section subheading (EN)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <input name="testimonials_badge_en" defaultValue={settings.testimonials_badge_en} placeholder="Testimonials badge (EN)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <input name="testimonials_title_en" defaultValue={settings.testimonials_title_en} placeholder="Testimonials title (EN)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <input name="pricing_section_title_en" defaultValue={settings.pricing_section_title_en} placeholder="Pricing section title (EN)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <input name="pricing_section_link_en" defaultValue={settings.pricing_section_link_en} placeholder="Pricing section link text (EN)" className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                      </TabsContent>
+                    </Tabs>
 
-              <div className="mt-5 grid gap-5 md:grid-cols-2">
-                <div>
-                  <label htmlFor="alert_banner_text_bm" className="mb-1 block text-sm font-medium text-slate-200">Alert Banner Text (BM)</label>
-                  <input id="alert_banner_text_bm" name="alert_banner_text_bm" defaultValue={settings.alert_banner_text_bm} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-                <div>
-                  <label htmlFor="alert_banner_text_en" className="mb-1 block text-sm font-medium text-slate-200">Alert Banner Text (EN)</label>
-                  <input id="alert_banner_text_en" name="alert_banner_text_en" defaultValue={settings.alert_banner_text_en} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-              </div>
+                    <div className="space-y-1 rounded-md border border-slate-700/70 bg-slate-950/50 p-3 text-xs text-slate-300">
+                      <p className="font-semibold text-emerald-200">Tip Format Teks (Landing Preview)</p>
+                      <p>
+                        Highlight: <span className="font-mono text-emerald-200">[text]</span> → warna ikut{' '}
+                        <span className="font-semibold text-slate-200">Module 01 · Highlight Color</span>
+                      </p>
+                      <p>
+                        Bold: <span className="font-mono text-emerald-200">**text**</span> · Italic:{' '}
+                        <span className="font-mono text-emerald-200">*text*</span> · Monospace:{' '}
+                        <span className="font-mono text-emerald-200">`text`</span>
+                      </p>
+                    </div>
 
-              <div className="mt-5 grid gap-5 md:grid-cols-2">
-                <div>
-                  <label htmlFor="ticker_items_bm" className="mb-1 block text-sm font-medium text-slate-200">Ticker Items BM (1 per line)</label>
-                  <textarea id="ticker_items_bm" name="ticker_items_bm" rows={5} defaultValue={settings.ticker_items_bm.join('\n')} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-                <div>
-                  <label htmlFor="ticker_items_en" className="mb-1 block text-sm font-medium text-slate-200">Ticker Items EN (1 per line)</label>
-                  <textarea id="ticker_items_en" name="ticker_items_en" rows={5} defaultValue={settings.ticker_items_en.join('\n')} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-              </div>
-            </section>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <label className="flex items-center gap-3 rounded-md border border-slate-700 bg-slate-950 px-3 py-2">
+                        <input type="hidden" name="ticker_enabled_present" value="1" />
+                        <input type="checkbox" name="ticker_enabled" defaultChecked={settings.ticker_enabled} className="h-4 w-4" />
+                        Enable ticker
+                      </label>
+                      <input name="ticker_speed_seconds" type="number" defaultValue={settings.ticker_speed_seconds} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                    </div>
 
-            <section id="module-faq" className="scroll-mt-24 rounded-xl border border-slate-700/80 bg-slate-950/60 p-5">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-300">Module 03</p>
-              <h3 className="mt-1 text-xl font-semibold text-white">Benefits & FAQ Manager</h3>
-              <p className="mt-1 text-sm text-slate-400">Maintain benefit bullets and FAQ records used by landing and pricing pages.</p>
+                    <SettingsDynamicFields tickerItemsBm={settings.ticker_items_bm} tickerItemsEn={settings.ticker_items_en} faqs={faqs} showTicker showFaq={false} />
+                  </form>
+                </AccordionContent>
+              </AccordionItem>
 
-            <div className="mt-5 grid gap-5 md:grid-cols-3">
-              <div>
-                <label htmlFor="pricing_starter_benefits_bm" className="mb-1 block text-sm font-medium text-slate-200">
-                  Starter Benefits BM (1 per line)
-                </label>
-                <textarea
-                  id="pricing_starter_benefits_bm"
-                  name="pricing_starter_benefits_bm"
-                  defaultValue={settings.pricing_starter_benefits_bm.join('\n')}
-                  rows={10}
-                  className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500"
-                />
+              <AccordionItem id="module-usp" value="module-4" className="overflow-hidden rounded-xl border border-emerald-400/20 bg-slate-950/60 px-5">
+                <AccordionTrigger className="py-4 hover:no-underline">
+                  <div className="text-left">
+                    <p className="text-xs uppercase tracking-[0.16em] text-emerald-200">Module 04</p>
+                    <h3 className="mt-1 text-lg font-semibold">USP EZ Meta Features</h3>
+                    <p className="text-xs text-slate-400">Dynamic features list for landing page cards.</p>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-5">
+                  <form action={saveUspModuleSettings} className="space-y-5">
+                    <div className="flex justify-end"><ModuleSaveButton label={copy.save} /></div>
+                    <div className="rounded-md border border-emerald-400/20 bg-slate-900/40 p-3 text-xs text-slate-300">
+                      <p className="font-semibold text-emerald-200">Susunan ikut landing page (Card 1 → Card 6)</p>
+                      <p className="mt-1">Tip: isi semua 6 card untuk sama seperti paparan landing. Icon cadangan: Trophy, Globe2, HandCoins, Heart, BarChart3, Bot.</p>
+                    </div>
+                    <div className="space-y-3">
+                      {Array.from({ length: 6 }).map((_, index) => {
+                        const item = uspEditorSource[index];
+                        const i = index + 1;
+                        return (
+                          <div key={`usp-${i}`} className="rounded-md border border-slate-700/80 bg-slate-950/60 p-3">
+                            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-200">USP Card {i}</p>
+                            <div className="grid gap-3 md:grid-cols-[160px_1fr_2fr]">
+                              <input
+                                name={`usp_icon_${i}`}
+                                defaultValue={item?.icon ?? ''}
+                                placeholder="Icon (e.g. Trophy)"
+                                className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
+                              />
+                              <input
+                                name={`usp_title_${i}`}
+                                defaultValue={item?.title ?? ''}
+                                placeholder={`USP title ${i}`}
+                                className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
+                              />
+                              <input
+                                name={`usp_description_${i}`}
+                                defaultValue={item?.description ?? ''}
+                                placeholder="USP description"
+                                className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </form>
+                </AccordionContent>
+              </AccordionItem>
 
-                <label htmlFor="pricing_starter_benefits_en" className="mb-1 mt-4 block text-sm font-medium text-slate-200">
-                  Starter Benefits EN (1 per line)
-                </label>
-                <textarea
-                  id="pricing_starter_benefits_en"
-                  name="pricing_starter_benefits_en"
-                  defaultValue={settings.pricing_starter_benefits_en.join('\n')}
-                  rows={10}
-                  className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500"
-                />
-              </div>
+              <AccordionItem id="module-testimonials" value="module-5" className="overflow-hidden rounded-xl border border-emerald-400/20 bg-slate-950/60 px-5">
+                <AccordionTrigger className="py-4 hover:no-underline">
+                  <div className="text-left">
+                    <p className="text-xs uppercase tracking-[0.16em] text-emerald-200">Module 05</p>
+                    <h3 className="mt-1 text-lg font-semibold">Testimonials</h3>
+                    <p className="text-xs text-slate-400">Dynamic testimonial cards: user, avatar, quote.</p>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-5">
+                  <form action={saveTestimonialsModuleSettings} className="space-y-5">
+                    <div className="flex justify-end"><ModuleSaveButton label={copy.save} /></div>
+                    <div className="space-y-3">
+                      {Array.from({ length: 6 }).map((_, index) => {
+                        const item = settings.testimonials_payload[index];
+                        const i = index + 1;
+                        return (
+                          <div key={`testimonial-${i}`} className="grid gap-3 rounded-md border border-slate-700/80 bg-slate-950/60 p-3 md:grid-cols-3">
+                            <input name={`testimonial_name_${i}`} defaultValue={item?.name ?? ''} placeholder={`User name ${i}`} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                            <input name={`testimonial_role_${i}`} defaultValue={(item as any)?.role ?? ''} placeholder="Role / Company" className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                            <input name={`testimonial_avatar_${i}`} defaultValue={item?.avatar_url ?? ''} placeholder="Avatar URL (optional)" className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                            <textarea name={`testimonial_quote_${i}`} defaultValue={item?.quote ?? ''} rows={2} placeholder="Quote" className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 md:col-span-3" />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </form>
+                </AccordionContent>
+              </AccordionItem>
 
-              <div>
-                <label htmlFor="pricing_pro_benefits_bm" className="mb-1 block text-sm font-medium text-slate-200">
-                  Pro Benefits BM (1 per line)
-                </label>
-                <textarea
-                  id="pricing_pro_benefits_bm"
-                  name="pricing_pro_benefits_bm"
-                  defaultValue={settings.pricing_pro_benefits_bm.join('\n')}
-                  rows={10}
-                  className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500"
-                />
+              <AccordionItem id="module-pricing" value="module-6" className="overflow-hidden rounded-xl border border-emerald-400/20 bg-slate-950/60 px-5">
+                <AccordionTrigger className="py-4 hover:no-underline">
+                  <div className="text-left">
+                    <p className="text-xs uppercase tracking-[0.16em] text-emerald-200">Module 06</p>
+                    <h3 className="mt-1 text-lg font-semibold text-white">Pricing & Plans</h3>
+                    <p className="text-xs text-slate-400">Pricing, plan labels, descriptions and effective date.</p>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-5">
+                  <form action={savePricingModuleSettings} className="space-y-5">
+                    <div className="flex justify-end">
+                      <ModuleSaveButton label={copy.save} />
+                    </div>
 
-                <label htmlFor="pricing_pro_benefits_en" className="mb-1 mt-4 block text-sm font-medium text-slate-200">
-                  Pro Benefits EN (1 per line)
-                </label>
-                <textarea
-                  id="pricing_pro_benefits_en"
-                  name="pricing_pro_benefits_en"
-                  defaultValue={settings.pricing_pro_benefits_en.join('\n')}
-                  rows={10}
-                  className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500"
-                />
-              </div>
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <input name="pricing_starter_price" type="number" defaultValue={settings.pricing_starter_price} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                      <input name="pricing_pro_price" type="number" defaultValue={settings.pricing_pro_price} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                      <input name="pricing_agency_price" type="number" defaultValue={settings.pricing_agency_price} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                    </div>
 
-              <div>
-                <label htmlFor="pricing_agency_benefits_bm" className="mb-1 block text-sm font-medium text-slate-200">
-                  Agency Benefits BM (1 per line)
-                </label>
-                <textarea
-                  id="pricing_agency_benefits_bm"
-                  name="pricing_agency_benefits_bm"
-                  defaultValue={settings.pricing_agency_benefits_bm.join('\n')}
-                  rows={10}
-                  className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500"
-                />
+                    <Tabs defaultValue="bm">
+                      <TabsList className="grid h-auto grid-cols-2 bg-slate-900 p-1 text-slate-300">
+                        <TabsTrigger value="bm" className="data-[state=active]:bg-slate-700">BM</TabsTrigger>
+                        <TabsTrigger value="en" className="data-[state=active]:bg-slate-700">EN</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="bm" className="mt-3 grid gap-3 md:grid-cols-3">
+                        <input name="starter_name_bm" defaultValue={settings.starter_name_bm} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <input name="pro_name_bm" defaultValue={settings.pro_name_bm} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <input name="agency_name_bm" defaultValue={settings.agency_name_bm} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <textarea name="starter_desc_bm" defaultValue={settings.starter_desc_bm} rows={2} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <textarea name="pro_desc_bm" defaultValue={settings.pro_desc_bm} rows={2} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <textarea name="agency_desc_bm" defaultValue={settings.agency_desc_bm} rows={2} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                      </TabsContent>
+                      <TabsContent value="en" className="mt-3 grid gap-3 md:grid-cols-3">
+                        <input name="starter_name_en" defaultValue={settings.starter_name_en} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <input name="pro_name_en" defaultValue={settings.pro_name_en} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <input name="agency_name_en" defaultValue={settings.agency_name_en} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <textarea name="starter_desc_en" defaultValue={settings.starter_desc_en} rows={2} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <textarea name="pro_desc_en" defaultValue={settings.pro_desc_en} rows={2} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <textarea name="agency_desc_en" defaultValue={settings.agency_desc_en} rows={2} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                      </TabsContent>
+                    </Tabs>
 
-                <label htmlFor="pricing_agency_benefits_en" className="mb-1 mt-4 block text-sm font-medium text-slate-200">
-                  Agency Benefits EN (1 per line)
-                </label>
-                <textarea
-                  id="pricing_agency_benefits_en"
-                  name="pricing_agency_benefits_en"
-                  defaultValue={settings.pricing_agency_benefits_en.join('\n')}
-                  rows={10}
-                  className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500"
-                />
-              </div>
-            </div>
+                    <div className="grid gap-4 md:grid-cols-4">
+                      <input name="starter_bonus_accounts" type="number" defaultValue={settings.starter_bonus_accounts} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                      <input name="pro_bonus_accounts" type="number" defaultValue={settings.pro_bonus_accounts} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                      <input name="agency_bonus_accounts" type="number" defaultValue={settings.agency_bonus_accounts} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                      <input name="contact_whatsapp" defaultValue={settings.contact_whatsapp} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                    </div>
 
-            <div className="mt-5">
-              <label htmlFor="faqs_payload" className="mb-1 block text-sm font-medium text-slate-200">
-                FAQ Editor (BM_Q||BM_A||EN_Q||EN_A, one item per line)
-              </label>
-              <textarea
-                id="faqs_payload"
-                name="faqs_payload"
-                defaultValue={faqsPayload}
-                rows={10}
-                className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500"
-              />
-              <p className="mt-1 text-xs text-slate-400">
-                Edit existing FAQ, remove a line to delete, or add a line to create a new FAQ item.
-              </p>
-            </div>
-            </section>
+                    <div className="rounded-lg border border-slate-700/70 bg-slate-950/50 p-4">
+                      <p className="text-sm font-medium text-slate-200">Pricing Button Styler (Override)</p>
+                      <label className="mt-3 flex items-center gap-3 rounded-md border border-slate-700 bg-slate-950 px-3 py-2">
+                        <input type="hidden" name="pricing_button_override_enabled_present" value="1" />
+                        <input
+                          type="checkbox"
+                          name="pricing_button_override_enabled"
+                          defaultChecked={settings.pricing_button_override_enabled}
+                          className="h-4 w-4"
+                        />
+                        Enable pricing button override
+                      </label>
+                      <div className="mt-3 grid gap-3 md:grid-cols-2">
+                        <label className="space-y-1 text-xs text-slate-300">
+                          <span>Pricing Button Background</span>
+                          <input
+                            type="color"
+                            name="pricing_button_bg_color"
+                            defaultValue={settings.pricing_button_bg_color}
+                            className="h-10 w-full rounded-md border border-slate-700 bg-slate-950 p-1"
+                          />
+                        </label>
+                        <label className="space-y-1 text-xs text-slate-300">
+                          <span>Pricing Button Text</span>
+                          <input
+                            type="color"
+                            name="pricing_button_text_color"
+                            defaultValue={settings.pricing_button_text_color}
+                            className="h-10 w-full rounded-md border border-slate-700 bg-slate-950 p-1"
+                          />
+                        </label>
+                      </div>
+                    </div>
 
-            <section id="module-popup" className="scroll-mt-24 rounded-xl border border-slate-700/80 bg-slate-950/60 p-5">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-300">Module 04</p>
-              <h3 className="mt-1 text-xl font-semibold text-white">Dynamic Marketing Pop-up</h3>
-              <p className="mt-1 text-sm text-slate-400">Configure popup copy and CTA destination. Landing rendering integration is next step.</p>
+                    <DateTimePicker id="pricing_effective_date" name="pricing_effective_date" placeholder="Effective date/time" />
+                  </form>
+                </AccordionContent>
+              </AccordionItem>
 
-              <div className="mt-5 flex items-center gap-3">
-                <input id="popup_enabled" name="popup_enabled" type="checkbox" defaultChecked={settings.popup_enabled} className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-emerald-400" />
-                <label htmlFor="popup_enabled" className="text-sm text-slate-200">Enable Pop-up</label>
-              </div>
+              <AccordionItem id="module-faq" value="module-7" className="overflow-hidden rounded-xl border border-emerald-400/20 bg-slate-950/60 px-5">
+                <AccordionTrigger className="py-4 hover:no-underline">
+                  <div className="text-left">
+                    <p className="text-xs uppercase tracking-[0.16em] text-emerald-200">Module 07</p>
+                    <h3 className="mt-1 text-lg font-semibold">Benefits & FAQ</h3>
+                    <p className="text-xs text-slate-400">Pricing bullets and FAQ repeater editor.</p>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-5">
+                  <form action={saveFaqModuleSettings} className="space-y-5">
+                    <div className="flex justify-end"><ModuleSaveButton label={copy.save} /></div>
+                    <Tabs defaultValue="starter">
+                      <TabsList className="grid h-auto grid-cols-3 bg-slate-900 p-1 text-slate-300">
+                        <TabsTrigger value="starter" className="data-[state=active]:bg-slate-700">Starter</TabsTrigger>
+                        <TabsTrigger value="pro" className="data-[state=active]:bg-slate-700">Pro</TabsTrigger>
+                        <TabsTrigger value="agency" className="data-[state=active]:bg-slate-700">Agency</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="starter" className="mt-3 grid gap-3 md:grid-cols-2">
+                        <textarea name="pricing_starter_benefits_bm" defaultValue={settings.pricing_starter_benefits_bm.join('\n')} rows={7} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <textarea name="pricing_starter_benefits_en" defaultValue={settings.pricing_starter_benefits_en.join('\n')} rows={7} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                      </TabsContent>
+                      <TabsContent value="pro" className="mt-3 grid gap-3 md:grid-cols-2">
+                        <textarea name="pricing_pro_benefits_bm" defaultValue={settings.pricing_pro_benefits_bm.join('\n')} rows={7} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <textarea name="pricing_pro_benefits_en" defaultValue={settings.pricing_pro_benefits_en.join('\n')} rows={7} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                      </TabsContent>
+                      <TabsContent value="agency" className="mt-3 grid gap-3 md:grid-cols-2">
+                        <textarea name="pricing_agency_benefits_bm" defaultValue={settings.pricing_agency_benefits_bm.join('\n')} rows={7} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                        <textarea name="pricing_agency_benefits_en" defaultValue={settings.pricing_agency_benefits_en.join('\n')} rows={7} className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2" />
+                      </TabsContent>
+                    </Tabs>
+                    <SettingsDynamicFields tickerItemsBm={settings.ticker_items_bm} tickerItemsEn={settings.ticker_items_en} faqs={faqs} showTicker={false} showFaq faqAccordion />
+                    <textarea name="faqs_payload" defaultValue={faqsPayload} className="sr-only" readOnly />
+                  </form>
+                </AccordionContent>
+              </AccordionItem>
 
-              <div className="mt-5 grid gap-5 md:grid-cols-2">
-                <div>
-                  <label htmlFor="popup_headline_bm" className="mb-1 block text-sm font-medium text-slate-200">Popup Headline (BM)</label>
-                  <input id="popup_headline_bm" name="popup_headline_bm" defaultValue={settings.popup_headline_bm} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-                <div>
-                  <label htmlFor="popup_headline_en" className="mb-1 block text-sm font-medium text-slate-200">Popup Headline (EN)</label>
-                  <input id="popup_headline_en" name="popup_headline_en" defaultValue={settings.popup_headline_en} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-                <div>
-                  <label htmlFor="popup_description_bm" className="mb-1 block text-sm font-medium text-slate-200">Popup Description (BM)</label>
-                  <textarea id="popup_description_bm" name="popup_description_bm" rows={3} defaultValue={settings.popup_description_bm} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-                <div>
-                  <label htmlFor="popup_description_en" className="mb-1 block text-sm font-medium text-slate-200">Popup Description (EN)</label>
-                  <textarea id="popup_description_en" name="popup_description_en" rows={3} defaultValue={settings.popup_description_en} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-                <div>
-                  <label htmlFor="popup_button_text_bm" className="mb-1 block text-sm font-medium text-slate-200">Popup Button (BM)</label>
-                  <input id="popup_button_text_bm" name="popup_button_text_bm" defaultValue={settings.popup_button_text_bm} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-                <div>
-                  <label htmlFor="popup_button_text_en" className="mb-1 block text-sm font-medium text-slate-200">Popup Button (EN)</label>
-                  <input id="popup_button_text_en" name="popup_button_text_en" defaultValue={settings.popup_button_text_en} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <label htmlFor="popup_redirect_url" className="mb-1 block text-sm font-medium text-slate-200">Popup Redirect URL</label>
-                <input id="popup_redirect_url" name="popup_redirect_url" defaultValue={settings.popup_redirect_url} className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-emerald-500" />
-              </div>
-            </section>
-
-            <button
-              type="submit"
-              className="cursor-pointer rounded-md bg-emerald-500 px-5 py-2 font-medium text-slate-950 transition-colors hover:bg-emerald-400 active:scale-[0.98]"
-            >
-              {copy.save}
-            </button>
-          </form>
+            </Accordion>
           )}
         </main>
       </div>
     </div>
   );
 }
+

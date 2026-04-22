@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { openRouterConfig } from '@/config/env';
 import { AdMetric } from '@/db/types';
+import { getMergedRuntimeConfig } from '@/lib/system-runtime';
 
 // OpenRouter API base URL
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
@@ -141,11 +142,11 @@ function shouldUseMockData(): boolean {
 /**
  * Create an axios instance for OpenRouter API
  */
-function createOpenRouterClient() {
+function createOpenRouterClient(apiKey: string) {
   return axios.create({
     baseURL: OPENROUTER_API_URL,
     headers: {
-      'Authorization': `Bearer ${openRouterConfig.apiKey}`,
+      'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
       'HTTP-Referer': 'https://ez-meta.com', // Replace with your actual domain
       'X-Title': 'EZ Meta'
@@ -174,8 +175,12 @@ function shouldUseLocalLanguage(metrics: AdMetric): boolean {
  * @returns Ad creative response
  */
 export async function generateAdCreative(metrics: AdMetric): Promise<AdCreativeResponse> {
+  const { raw } = await getMergedRuntimeConfig();
+  const runtimeApiKey = raw.openrouter_api_key || openRouterConfig.apiKey;
+  const runtimeModel = raw.openrouter_model || 'anthropic/claude-3-7-sonnet';
+
   // Use mock data if OpenRouter API credentials are not set
-  if (shouldUseMockData()) {
+  if (!runtimeApiKey) {
     console.log('Using mock data for Ad Creative');
     return MOCK_CREATIVE_RESPONSE;
   }
@@ -267,9 +272,9 @@ Please format your response as a valid JSON object exactly matching this structu
 IMPORTANT: Your response must be a valid JSON object that exactly matches this structure. Do not include any text outside the JSON object.`;
 
     // Call OpenRouter API
-    const client = createOpenRouterClient();
+    const client = createOpenRouterClient(runtimeApiKey);
     const response = await client.post('', {
-      model: 'anthropic/claude-3-7-sonnet', // or 'deepseek/deepseek-chat'
+      model: runtimeModel,
       messages: [
         {
           role: 'system',

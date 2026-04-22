@@ -9,10 +9,14 @@ export default async function Login({
   const params = await searchParams;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-transparent py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="cyber-grid relative min-h-screen overflow-hidden px-4 py-12 sm:px-6 lg:px-8">
+      <div className="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-emerald-400/15 blur-[120px]" />
+      <div className="pointer-events-none absolute -right-24 top-40 h-80 w-80 rounded-full bg-sky-400/15 blur-[130px]" />
+
+      <div className="relative z-10 mx-auto flex min-h-[70vh] max-w-md items-center">
+        <div className="cyber-panel w-full space-y-8 p-6 md:p-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-100">
+          <h2 className="mt-2 text-center font-display text-3xl text-slate-100">
             Sign in to your account
           </h2>
           <p className="mt-2 text-center text-sm text-slate-400">
@@ -88,6 +92,7 @@ export default async function Login({
             </button>
           </div>
         </form>
+      </div>
       </div>
     </div>
   );

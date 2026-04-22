@@ -26,6 +26,8 @@ export type PricingSettings = {
   agency_bonus_accounts: number;
   ticker_items_bm: string[];
   ticker_items_en: string[];
+  ticker_enabled: boolean;
+  ticker_speed_seconds: number;
   popup_enabled: boolean;
   popup_headline_bm: string;
   popup_headline_en: string;
@@ -34,6 +36,8 @@ export type PricingSettings = {
   popup_button_text_bm: string;
   popup_button_text_en: string;
   popup_redirect_url: string;
+  popup_start_date: string;
+  popup_end_date: string;
 };
 
 export type PricingLang = 'bm' | 'en';
@@ -79,6 +83,8 @@ export const EMPTY_PRICING_SETTINGS: PricingSettings = {
   agency_bonus_accounts: 3,
   ticker_items_bm: ['AI TELEGRAM ALERTS', 'WINNING AD DETECTOR', 'CREATIVE FATIGUE MONITOR', 'BUDGET TRACKER'],
   ticker_items_en: ['AI TELEGRAM ALERTS', 'WINNING AD DETECTOR', 'CREATIVE FATIGUE MONITOR', 'BUDGET TRACKER'],
+  ticker_enabled: true,
+  ticker_speed_seconds: 26,
   popup_enabled: false,
   popup_headline_bm: 'Tawaran Terhad EZ Meta',
   popup_headline_en: 'Limited EZ Meta Offer',
@@ -87,6 +93,8 @@ export const EMPTY_PRICING_SETTINGS: PricingSettings = {
   popup_button_text_bm: 'Aktifkan Sekarang',
   popup_button_text_en: 'Activate Now',
   popup_redirect_url: '/pricing',
+  popup_start_date: '',
+  popup_end_date: '',
 };
 
 function uniqOrdered(items: string[]): string[] {
