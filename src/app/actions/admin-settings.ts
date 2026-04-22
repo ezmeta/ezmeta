@@ -1703,11 +1703,17 @@ async function saveSettingsRows(options: {
 
     const adminId = cookieStore.get('admin_actor')?.value || 'admin-session';
 
-    const snapshotTimeout = timeoutController(4000);
-    const { data: currentRows } = await (supabase as any).from('site_settings').select('key, value').abortSignal(snapshotTimeout.signal);
-    snapshotTimeout.clear();
+    let currentRows: Array<{ key: string; value: any }> | null = null;
+    try {
+      const snapshotTimeout = timeoutController(10000);
+      const { data } = await (supabase as any).from('site_settings').select('key, value').abortSignal(snapshotTimeout.signal);
+      snapshotTimeout.clear();
+      currentRows = Array.isArray(data) ? (data as Array<{ key: string; value: any }>) : null;
+    } catch (snapshotError) {
+      console.warn(`Snapshot skipped for ${source}:`, snapshotError);
+    }
 
-    const upsertTimeout = timeoutController(4000);
+    const upsertTimeout = timeoutController(10000);
     const { error } = await (supabase as any).from('site_settings').upsert(rows, { onConflict: 'key' }).abortSignal(upsertTimeout.signal);
     upsertTimeout.clear();
     if (error) {
@@ -1716,18 +1722,22 @@ async function saveSettingsRows(options: {
     }
 
     if (Array.isArray(currentRows)) {
-      const historyTimeout = timeoutController(4000);
-      await (supabase as any)
-        .from('site_settings_history')
-        .insert({
-          snapshot: {
-            items: currentRows,
-            source,
-          },
-          created_by: adminId,
-        })
-        .abortSignal(historyTimeout.signal);
-      historyTimeout.clear();
+      try {
+        const historyTimeout = timeoutController(10000);
+        await (supabase as any)
+          .from('site_settings_history')
+          .insert({
+            snapshot: {
+              items: currentRows,
+              source,
+            },
+            created_by: adminId,
+          })
+          .abortSignal(historyTimeout.signal);
+        historyTimeout.clear();
+      } catch (historyError) {
+        console.warn(`History insert skipped for ${source}:`, historyError);
+      }
 
       const prevMap = new Map<string, any>();
       for (const row of currentRows as Array<{ key: string; value: any }>) prevMap.set(row.key, row.value);
@@ -1742,9 +1752,13 @@ async function saveSettingsRows(options: {
         }));
 
       if (auditRows.length > 0) {
-        const auditTimeout = timeoutController(4000);
-        await (supabase as any).from('config_audit_log').insert(auditRows).abortSignal(auditTimeout.signal);
-        auditTimeout.clear();
+        try {
+          const auditTimeout = timeoutController(10000);
+          await (supabase as any).from('config_audit_log').insert(auditRows).abortSignal(auditTimeout.signal);
+          auditTimeout.clear();
+        } catch (auditError) {
+          console.warn(`Audit insert skipped for ${source}:`, auditError);
+        }
       }
     }
 
